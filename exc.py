@@ -13,14 +13,19 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-__all__ = ['TapParseError', 'TapBailout']
+__all__ = ['TapParseError', 'TapMissingPlan', 'TapInvalidNumbering', 'TapBailout']
 
 
 class TapParseError(Exception):
     pass
 
+class TapMissingPlan(TapParseError):
+    pass
+
+class TapInvalidNumbering(TapParseError):
+    pass
 
 class TapBailout(Exception):
     def __str__(self):
         message = self.message and (u' ' + self.message) or u''
-        return u'Bail out!{}'.format(message)
+        return u'Bail out! {}'.format(message.strip())

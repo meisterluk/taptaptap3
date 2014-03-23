@@ -850,10 +850,15 @@ class TapDocumentReader(object):
             self.log.info("String '{} ...' looks like a plan, "
                 "but its not allowed here".format(string[:20]))
 
-    def from_string(self, string, check_validity=True):
+    def from_string(self, string, lenient=True):
         """Parse the given string. Raises ``TapParseError``
         for invalid syntax.
+
+        If lenient == True
+          lines like "1..3a" will not be considered as invalid plan,
+          but normal comments.
         """
+        plan_read = False
         string = string.lstrip('\r\n')
         if not string.endswith(os.linesep):
             string += os.linesep
@@ -862,7 +867,10 @@ class TapDocumentReader(object):
         # version and plan
         index += self.parse_possible_version(string[index:])
         index += self.skip_comment(string[index:])
+        prev = index
         index += self.parse_possible_plan(string[index:])
+        if prev != index:
+            plan_read = True
         index += self.skip_comment(string[index:])
 
         while True:
@@ -872,8 +880,11 @@ class TapDocumentReader(object):
             index, tc_parsed = index + change, bool(change)
 
             change = self.parse_possible_plan(string[index:])
+            if change and plan_read:
+                raise TapParseError("Plan read twice")
             if change:
                 index += change
+                plan_read = True
                 break
 
             if tc_parsed:
@@ -886,6 +897,9 @@ class TapDocumentReader(object):
 
             if not (tc_parsed or bailout_parsed):
                 break
+
+        if not plan_read:
+            raise TapParseError("Missing a master plan like '1..3'")
 
         if string[index:].strip():  # if some text remains, error
             msg = "Some text could not be parsed: '{} ...'"

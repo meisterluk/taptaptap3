@@ -20,6 +20,11 @@
       the Traceback line is related to the testcase; not the general document.
       The opposite is not required by the specification.
 
+    Requirements to a TAP document:
+    1. There is at least one plan (beginning or end of file)
+    2. There is at least one test line in TAP output.
+    3. Testcases must be auto-enumerated if no numbering is provided.
+
     **TODO:**
     * http://web.archive.org/web/20120730055351/http://testanything.org/wiki/index.php/TAP_Consumers
     * Interface unittest module

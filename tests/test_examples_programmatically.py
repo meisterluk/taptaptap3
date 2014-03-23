@@ -1,0 +1,5 @@
+#            verify('doc[1].field and not doc[2].field'),
+#            verify('doc[3].field and not doc[4].field'),
+#            verify('"Input file" in doc[1].description'),
+#            verify('doc[4].todo'),
+#            verify('"TODO" in doc[4].directive'),
