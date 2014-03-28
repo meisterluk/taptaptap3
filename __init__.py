@@ -45,7 +45,7 @@ __docformat__ = 'reStructuredText'
 
 from .impl import TapParseError, TapBailout
 from .impl import TapDocumentReader, TapTestcase, TapDocumentIterator
-from .impl import TapDocument, TapDocumentReader
+from .impl import TapDocument, TapDocumentReader, TapNumbering
 
 from .api import parse_string, parse_file, TapWriter, TapCreator
 from .api import SimpleTapCreator, UnittestRunner

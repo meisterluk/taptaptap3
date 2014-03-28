@@ -13,7 +13,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-from .exc import TapParseError, TapBailout
+from .exc import TapParseError, TapBailout, TapInvalidNumbering
 
 import io
 import re
@@ -26,13 +26,13 @@ import yamlish
 
 __all__ = ['TapDocumentReader', 'TapParseError', 'TapBailout', 'TapTestcase',
            'TapDocumentIterator', 'TapDocument', 'TapDocumentReader',
-           'parse_string', 'parse_file']
-
-
+           'TapNumbering', 'parse_string', 'parse_file']
 
 
 class TapTestcase(object):
     """Object representation of an entry in a TAP file"""
+    is_testcase = True
+    is_bailout = False
 
     def __init__(self):
         # test line
@@ -55,18 +55,18 @@ class TapTestcase(object):
 
     @field.setter
     def field(self, value):
+        errmsg = "field value must be 'ok' or 'not ok', not {!r}".format(value)
         try:
-            if value is None:
-                self._field = None
-            elif value is True:
+            if value in [None, True, False]:
+                self._field = value
+            elif value.rstrip() == 'ok':
                 self._field = True
-            elif value is False:
+            elif value.rstrip() == 'not ok':
                 self._field = False
-            elif value.strip() == 'ok':
-                self._field = True
+            else:
+                raise ValueError(errmsg)
         except AttributeError:
-            msg = "field value must be 'ok' or 'not ok', not {!r}".format(value)
-            raise ValueError(msg)
+            raise ValueError(errmsg)
 
     @field.deleter
     def field(self):
@@ -82,9 +82,12 @@ class TapTestcase(object):
         if value is None:
             self._number = value
             return
-        value = int(value)
-        if value <= 0:
-            raise ValueError("Testcase number must be greater than zero")
+        try:
+            value = int(value)
+        except TypeError:
+            raise ValueError("Argument must be integer")
+        if value < 0:
+            raise ValueError("Testcase number must not be negative")
         self._number = value
 
     @number.deleter
@@ -267,28 +270,115 @@ class TapDocumentIterator(object):
             self.current += 1
             return self.tcs[self.current]
 
+class TapNumbering(object):
+    """TAP testcase numbering. In TAP documents it is called "the plan".
+    Only to be used by `TapDocument` internally.
+    """
 
-class TapDocument(object):
+    PLAN_REGEX = re.compile(r'(?P<plan>(\d+)\.\.(\d+))', flags=re.IGNORECASE)
+
+    def __init__(self, first=None, last=None, tests=None, strict=False):
+        """Constructor. Provide `first` and `last` XOR a number of `tests`.
+
+        `first` and `last` are testcase numbers. Both inclusive.
+
+        If `strict` is True, a decreasing range will raise a TapInvalidNumbering
+        Exception. Otherwise it will just be normalized (set `last` to `first`).
+        """
+        if first is not None and last is not None:
+            self.first = int(first)
+            self.length = int(last) - int(first) + 1
+
+            if int(last) < int(first):
+                if strict:
+                    msg = 'range {}..{} is decreasing'.format(first, last)
+                    raise TapInvalidNumbering('Invalid testcase numbering: ' + msg)
+                else:
+                    self.length = 0
+
+        elif tests is not None:
+            self.first = 1
+            self.length = int(tests)
+        else:
+            msg = 'Either provide a first and last or a number of tests'
+            raise ValueError(msg)
+
+        assert(self.first >= 0 and self.length >= 0)
+
+    def __len__(self):
+        return self.length
+
+    def __contains__(self, tc_number):
+        """Is `tc_number` within this TapNumbering range?"""
+        tc_number = int(tc_number)
+        if self.length == 0:
+            return False
+        else:
+            return self.first <= tc_number < self.first + self.length
+
+    @classmethod
+    def parse(cls, string, strict=False):
+        """Parse the `string` specifying a plan. See constructor
+        for `strict` documentation. Returns a new TapNumbering instance.
+        """
+        string = string.rstrip()
+        match = cls.PLAN_REGEX.match(string)
+        if match:
+            if len(match.group(0)) != len(string):
+                raise ValueError("Trailing text in plan '{}'".format(string))
+            return TapNumbering(first=match.group(2),
+                last=match.group(3), strict=strict)
+        else:
+            msg = "String '{}' does not specify plan"
+            raise ValueError(msg.format(string))
+
+    def inc(self):
+        """Increase numbering for one new testcase"""
+        self.length += 1
+
+    def normalized_plan(self):
+        """Return a normalized plan where first=1"""
+        if self.length == 0:
+            raise ValueError("Cannot create plan for 0 testcases")
+        return '{:d}..{:d}'.format(1, self.length)
+
+    def __iter__(self):
+        return iter(range(self.first, self.first + self.length))
+
+    def __unicode__(self):
+        """Return unicode representation of plan.
+        If it was initially a decreasing range, first=last now.
+        """
+        if self.length == 0:
+            raise ValueError("Cannot create plan for 0 testcases")
+        return '{:d}..{:d}'.format(self.first, self.first + self.length - 1)
+
+
+class TapDocument(TapNumbering):
     """An object representing a whole TAP document"""
-    # REMARK. Comments that are not data get lost.
 
     def __init__(self, version=13, skip=False):
+        # TAP version *
         self.version = int(version)
+        # comment before first testcase
+        # TODO: implementation
+        self.header_comment = ''
+        # sequence of testcases in document
         self.testcases = []
+        # TAP plan
         self.range = None
+        # Bail out!
         self.bailout = None
         self.bailout_index = None
+        # Testcase is flagged to be skipped
         self.skip = skip
 
     def __len__(self):
+        """Return number of testcases"""
         return len(self.testcases)
 
     def __nonzero__(self):
         return True
-
-    def set_version(self, version):
-        """Set TAP version number of document"""
-        self.version = int(version)
 
     def get_actual_range(self):
         """Get the actual range of the associated testcases.
@@ -663,6 +753,16 @@ class TapDocumentReader(object):
     """Lexer and parser for TAP documents.
     Use `from_string` or `from_file` method to parse input.
     Use the `document` member to retrieve an instance of `TapDocument`.
+
+
+
+    In general this document is an immutable object.
+    You can call `from_file` or `from_string` to parse a TAP document.
+    After that, the document cannot be modified. Unofficially you can
+    also call `add_line` to add line-by-line after the document has been
+    read and it will still modify the document. However, there is no
+    interface to modify the document 
+    
     """
 
     VERSION_REGEX = re.compile(

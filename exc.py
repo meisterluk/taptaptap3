@@ -26,6 +26,9 @@ class TapInvalidNumbering(TapParseError):
     pass
 
 class TapBailout(Exception):
+    is_testcase = False
+    is_bailout = True
+
     def __str__(self):
         message = self.message and (u' ' + self.message) or u''
         return u'Bail out! {}'.format(message.strip())
