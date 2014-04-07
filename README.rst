@@ -3,9 +3,9 @@ Introduction
 
 :name:          taptaptap
 :author:        Lukas Prokop
-:date:          Feb-Mar 2014
+:date:          Feb-Apr 2014
 :license:       BSD 3-clause
-:version:       0.8.0-tests-missing
+:version:       1.0.0-stable
 :issues:        http://github.com/meisterluk/taptaptap/issues
 
 Test Anything Protocol handling for cats \*rawwr*
@@ -20,13 +20,12 @@ Compatibility
 
 ``taptaptap`` has been tested with
 * TODO 2.6
-* TODO 2.7
 
 You can run the ``taptaptap`` testcases yourself using::
 
-    ./runtests.py
+    ./run.sh
 
-The `examples` directory contains many examples how to use ``taptaptap``.
+in the tests directory. The `examples` directory contains many examples how to use ``taptaptap``.
 
 Format
 ------

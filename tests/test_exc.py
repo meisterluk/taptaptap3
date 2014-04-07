@@ -10,7 +10,7 @@ import unittest
 
 
 def parse(source, strict=False):
-    TapDocumentReader().from_string(source, lenient=not strict)
+    TapDocumentReader(lenient=not strict).from_string(source)
 
 
 class TestExceptions(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestExceptions(unittest.TestCase):
         self.assertRaises(TapParseError, parse, invalid_plan, True)
 
         parse(invalid_testcase)
-        self.assertRaises(TapParseError, parse, invalid_testcase)
+        self.assertRaises(TapParseError, parse, invalid_testcase, True)
 
         parse(negative_plan)
         self.assertRaises(TapParseError, parse, negative_plan, True)

@@ -12,13 +12,14 @@ import subprocess
 import taptaptap
 
 
-EXAMPLES = "../examples/"
+EXAMPLES = "taptaptap/examples/"
 
 # testsuite
 
 def callTaptaptap(example_file, tests):
-    cmd = ['python', '-R', '-t', '-t', '-m', 'taptaptap', example_file]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = ['python', '-R', '-t', '-t', '-m', 'taptaptap.__main__', example_file]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, cwd='../..')
     out, err = proc.communicate()
 
     for testcode in tests:
@@ -33,8 +34,9 @@ def runProgram(cmd, tests):
 
 def verify(code, out, err, retcode):
     local = {'out': out, 'err': err, 'retcode': retcode}
+    print(err)  # TODO
     try:
-        exec 'assert {}'.format(code, code) in {}, local
+        exec 'assert {}'.format(code) in {}, local
     except AssertionError:
         raise AssertionError("Failed: " + code)
 
@@ -101,9 +103,11 @@ TESTCASES_CLI = [
 
 if __name__ == '__main__':
     for (filepath, tests) in TESTCASES_TAPTAPTAP.iteritems():
+        print 'Running TAPTAPTAP testcase {}'.format(filepath)
         callTaptaptap(filepath, tests)
-        print 'TAPTAPTAP testcase {} passed successfully.'.format(filename)
+        print '      [passed successfully]'
 
     for (cmd, tests) in TESTCASES_CLI.iteritems():
+        print 'Running CLI testcase {}'.format(' '.join(cmd))
         runProgram(cmd, tests)
-        print 'CLI testcase {} passed successfully.'.format(' '.join(cmd))
+        print '      [passed successfully]'

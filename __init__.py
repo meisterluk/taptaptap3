@@ -23,11 +23,7 @@
     Requirements to a TAP document:
     1. There is at least one plan (beginning or end of file)
     2. There is at least one test line in TAP output.
-    3. Testcases must be auto-enumerated if no numbering is provided.
-
-    **TODO:**
-    * http://web.archive.org/web/20120730055351/http://testanything.org/wiki/index.php/TAP_Consumers
-    * Interface unittest module
+    3. All data structures are immutable. As such I am using some copy operations.
 
     .. [0] https://metacpan.org/pod/release/PETDANCE/Test-Harness-2.64/lib/Test/Harness/TAP.pod#THE-TAP-FORMAT
     .. [1] http://web.archive.org/web/20120730055134/http://testanything.org/wiki/index.php/TAP_specification
@@ -39,15 +35,19 @@ from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
 __author__ = 'Lukas Prokop <admin@lukas-prokop.at>'
-__version__ = '0.1.0'
+__version__ = '1.0.0'
 __license__ = '3-clause BSD license'
 __docformat__ = 'reStructuredText'
 
-from .impl import TapParseError, TapBailout
-from .impl import TapDocumentReader, TapTestcase, TapDocumentIterator
-from .impl import TapDocument, TapDocumentReader, TapNumbering
+from .impl import YamlData, TapTestcase, TapActualNumbering, TapNumbering
+from .impl import TapDocument, TapDocumentIterator, TapDocumentActualIterator
+from .impl import TapDocumentFailedIterator, TapDocumentTokenizer
+from .impl import TapDocumentParser, TapStream, TapContext, validate
+from .impl import repr_harness, tapmerge, parse_file, parse_string
 
-from .api import parse_string, parse_file, TapWriter, TapCreator
-from .api import SimpleTapCreator, UnittestRunner
+from .exc import TapParseError, TapMissingPlan, TapInvalidNumbering, TapBailout
+
+from .api import doc_from_string, doc_from_file, TapWriter, TapCreator
+from .api import SimpleTapCreator, UnittestResult, UnittestRunner
 
 from . import proc

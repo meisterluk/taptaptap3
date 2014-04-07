@@ -17,26 +17,28 @@ import sys
 import time
 import unittest
 
-from . import TapTestcase, TapDocument, TapDocumentReader
+from .impl import TapTestcase, TapDocument, TapDocumentTokenizer, TapDocumentParser
 
+__all__ = ['doc_from_string', 'doc_from_file', 'TapWriter', 'TapCreator',
+           'SimpleTapCreator', 'UnittestResult', 'UnittestRunner']
 
-__ALL__ = ['parse_file', 'parse_string', 'TapWriter',
-           'TapCreator', 'SimpleTapCreator']
 
 # Simply function to create TapDocument instances
 
-def parse_string(tap_string):
+def doc_from_string(tap_string):
     """Parse a TAP document from the given unicode string."""
-    reader = TapDocumentReader()
-    reader.from_string(tap_string)
-    return reader.document
+    tokenizer = TapDocumentTokenizer()
+    tokenizer.from_string(tap_string)
+    parser = TapDocumentParser(tokenizer, lenient)
+    return parser.document
 
 
-def parse_file(filepath):
+def doc_from_file(filepath):
     """Parse the TAP document at the given `filepath`."""
-    reader = TapDocumentReader()
-    reader.from_file(filepath)
-    return reader.documentTapDocumentReader
+    tokenizer = TapDocumentTokenizer()
+    tokenizer.from_file(filepath)
+    parser = TapDocumentParser(tokenizer, lenient)
+    return parser.document
 
 
 
