@@ -175,27 +175,27 @@ class UnittestResult(unittest.result.TestResult):
     def addSuccess(self, test):
         super(UnittestResult, self).addSuccess(test)
         with self.doc as d:
-            data = unicode(test).strip() + '\n'
+            data = [unicode(test).strip() + '\n']
             d.ok(test.shortDescription(), data=data)
 
     def addError(self, test, err):
         super(UnittestResult, self).addError(test, err)
         exctype, value, tracebk = err
         with self.doc as d:
-            d.not_ok(test.shortDescription(), data=value.strip() + '\n')
+            d.not_ok(test.shortDescription(), data=[value.strip() + '\n'])
             d.comment(unicode(test))
 
     def addFailure(self, test, err):
         super(UnittestResult, self).addFailure(test, err)
         exctype, value, tracebk = err
         with self.doc as d:
-            d.not_ok(test.shortDescription(), data=value.strip() + '\n')
+            d.not_ok(test.shortDescription(), data=[value.strip() + '\n'])
             d.comment(unicode(test))
 
     def addSkip(self, test, reason):
         super(UnittestResult, self).addSkip(test, reason)
         with self.doc as d:
-            data = unicode(test).strip() + '\n'
+            data = [unicode(test).strip() + '\n']
             d.not_ok(test.shortDescription(), data=data, skip=reason)
 
     def addTime(self, seconds):

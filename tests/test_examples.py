@@ -18,9 +18,12 @@ EXAMPLES = "taptaptap/examples/"
 
 def callTaptaptap(example_file, tests):
     cmd = ['python', '-R', '-t', '-t', '-m', 'taptaptap.__main__', example_file]
+    print('Running:  {}'.format(' '.join(cmd)))
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE, cwd='../..')
     out, err = proc.communicate()
+    #print(out)
+    #print(out, err, proc.returncode)
 
     for testcode in tests:
         verify(testcode, out, err, proc.returncode)
@@ -34,7 +37,6 @@ def runProgram(cmd, tests):
 
 def verify(code, out, err, retcode):
     local = {'out': out, 'err': err, 'retcode': retcode}
-    print(err)  # TODO
     try:
         exec 'assert {}'.format(code) in {}, local
     except AssertionError:
@@ -43,7 +45,7 @@ def verify(code, out, err, retcode):
 # testcase specification
 
 # cli tools
-cli_validate = ['python', '../tapvalidate.py']
+cli_validate = ['/usr/bin/python', '../bin/tapvalidate']
 cli_merge = ['python', '../tapmerger.py']
 e = lambda filename: os.path.join(EXAMPLES, filename + '.tap')
 
@@ -66,17 +68,18 @@ TESTCASES_TAPTAPTAP = {
         NO_ERROR1 + NO_BAILOUT,
     e('005'):
         ['"database handle" in out', 'retcode == 2', \
-        '"Bail out! Couldn\'t" in out'] + NO_ERROR1,
+        '"Bail out! Couldn\'t" in out',
+        '"Error" not in err and "Exception" not in err'],
     e('006'):
         ['"SKIP no /sys directory" in out'] + NO_ERROR0 + NO_BAILOUT,
     e('007'):
         ['"English-to-French translator" in out'] + NO_ERROR0 + NO_BAILOUT,
-    e('008'): NO_ERROR0 + NO_BAILOUT,
+    e('008'): NO_ERROR1 + NO_BAILOUT,
     e('009'): NO_ERROR0 + NO_BAILOUT,
     e('010'): NO_ERROR0 + NO_BAILOUT,
     e('011'):
-        ['"\'First line invalid\'"" in out', '"data:" in out', '"ok 3" in out'] + \
-        NO_ERROR0 + NO_BAILOUT
+        ['"First line invalid" in out', '"data:" in out', '"ok 3" in out'] + \
+        NO_ERROR1 + NO_BAILOUT
 }
 
 TESTCASES_CLI = [
@@ -107,7 +110,7 @@ if __name__ == '__main__':
         callTaptaptap(filepath, tests)
         print '      [passed successfully]'
 
-    for (cmd, tests) in TESTCASES_CLI.iteritems():
+    for (cmd, tests) in TESTCASES_CLI:
         print 'Running CLI testcase {}'.format(' '.join(cmd))
         runProgram(cmd, tests)
         print '      [passed successfully]'

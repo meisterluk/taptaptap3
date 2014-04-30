@@ -14,9 +14,12 @@ from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
 import os
+import sys
 
 __all__ = ['TapParseError', 'TapMissingPlan',
            'TapInvalidNumbering', 'TapBailout']
+
+STR_ENC = sys.getdefaultencoding()
 
 
 class TapParseError(Exception):
@@ -40,7 +43,10 @@ class TapBailout(Exception):
         self._data = []
 
     def __str__(self):
-        return u'Bail out! {}'.format(os.linesep.join(self.data))
+        return unicode(self).encode(STR_ENC)
+
+    def __unicode__(self):
+        return u'Bail out! {}{}'.format(os.linesep.join(self.data), os.linesep)
 
     @property
     def data(self):
@@ -48,19 +54,16 @@ class TapBailout(Exception):
 
     @data.setter
     def data(self, value):
-        self.message = value[0]
-        self._data = value[1:]
+        if value:
+            self.message = value[0]
+            self._data = value[1:]
 
     @data.deleter
     def data(self):
         self.message = u''
         self._data = []
 
-    def copy(self):
-        return TapBailout(self.message)
-
-    def __getstate__(self):
-        return {'bailout': self.message}
-
-    def __setstate__(self, state):
-        self.message = state['bailout']
+    def copy(self, memo=None):
+        inst = TapBailout(self.message)
+        inst.data = self._data
+        return inst

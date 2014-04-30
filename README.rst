@@ -48,4 +48,6 @@ The ``TapDocument`` and ``TapTestcase`` objects are pickable.
 How to use ``taptaptap``
 ------------------------
 
-
+Does ``taptaptap`` suite your needs?
+* It does, if you are looking for a parser and validator for your TAP documents and you don't want to care about details and just need a gentle API.
+* It does not, if you just need a high-performant TAP writer. This implementation makes a lot of sanitization checks and covers all unspecified special cases.

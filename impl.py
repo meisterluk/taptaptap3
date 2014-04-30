@@ -31,12 +31,10 @@ from __future__ import print_function, unicode_literals
 
 from .exc import TapParseError, TapBailout, TapMissingPlan, TapInvalidNumbering
 
-import io
 import re
 import os
 import sys
 import copy
-import locale
 import logging
 import yamlish
 import collections
@@ -44,8 +42,8 @@ import collections
 __all__ = ['YamlData', 'TapTestcase', 'TapActualNumbering', 'TapNumbering',
            'TapDocument', 'TapDocumentIterator', 'TapDocumentActualIterator',
            'TapDocumentFailedIterator', 'TapDocumentTokenizer',
-           'TapDocumentParser', 'TapStream', 'TapContext', 'validate',
-           'repr_harness', 'tapmerge', 'parse_file', 'parse_string']
+           'TapDocumentParser', 'TapContext', 'validate', 'repr_harness',
+           'tapmerge', 'parse_file', 'parse_string']
 
 
 STR_ENC = sys.getdefaultencoding()
@@ -68,11 +66,11 @@ class TapTestcase(object):
     is_testcase = True
     is_bailout = False
 
-    def __init__(self):
+    def __init__(self, field=None, number=None, description=u''):
         # test line
-        self._field = None
-        self._number = None
-        self.description = u''
+        self._field = field
+        self._number = number
+        self.description = description
         self._directives = {'skip': [], 'todo': []}
         # data
         self._data = []
@@ -247,48 +245,45 @@ class TapTestcase(object):
 
     def __unicode__(self):
         """TAP testcase representation as a unicode object"""
+        num, desc, directive = self.number, self.description, self.directive
+
         out = u'ok ' if self.field else u'not ok '
-        if self.number is not None:
-            out += unicode(self.number) + u' '
-        if self.description:
-            out += u'- {} '.format(self.description)
-        if self.directive is not None:
-            out += u'# {} '.format(self.directive)
+        if num is not None:
+            out += unicode(num) + u' '
+        if desc:
+            out += u'- {} '.format(desc)
+        if directive:
+            out += u'# {} '.format(directive)
+        out = out.rstrip()
         if self.data:
             data = [unicode(d) for d in self.data]
             out += os.linesep + self.indent((os.linesep).join(data), 2)
-        return out
+
+        if out.endswith(os.linesep):
+            return out
+        else:
+            return out + os.linesep
 
     def __str__(self):
         return unicode(self).encode(STR_ENC)
 
 
-class TapActualNumbering(object):
+class TapNumbering(object):
     """TAP testcase numbering. In TAP documents it is called 'the plan'."""
 
-    def __init__(self, num_range=(1, 0), numbers=None):
-        """Constructor.
-
-        :param tuple num_range:   (first, last) testcase numbers
-        :param list numbers:      list of testcase numbers (possibly Nones)
-        """
-        self.init_range(first=num_range[0], last=num_range[1])
-        self.init_numbering(copy.deepcopy(numbers or []))
-
-    def init_numbering(self, numbers):
-        """Initialize numbering (is a list of numbers and Nones)."""
-        self.numbers = list(numbers)
-        return self
-
-    def init_range(self, first=None, last=None, tests=None, strict=False):
-        """Provide `first` and `last` XOR a number of `tests`.
+    def __init__(self, first=None, last=None, tests=None, lenient=True):
+        """Constructor. Provide `first` and `last` XOR a number of `tests`.
 
         `first` and `last` are testcase numbers. Both inclusive.
 
-        If `strict` is True, a decreasing range (except '1..0')
+        If `lenient` is False, a decreasing range (except '1..0')
         will raise a TapInvalidNumbering Exception.
         Otherwise it will just be normalized (set `last` to `first`).
         """
+        arg_errmsg = 'Either provide a first and last or a number of tests'
+        if first and last and tests:
+            raise ValueError(arg_errmsg)
+
         if first is not None and last is not None:
             self.first = int(first)
             self.length = int(last) - int(first) + 1
@@ -297,7 +292,7 @@ class TapActualNumbering(object):
                 self.length = 0
             elif int(last) < int(first):
                 self.length = 0
-                if strict:
+                if not lenient:
                     msg = 'range {}..{} is decreasing'.format(first, last)
                     msg = 'Invalid testcase numbering: ' + msg
                     raise TapInvalidNumbering(msg)
@@ -307,77 +302,9 @@ class TapActualNumbering(object):
             self.length = int(tests)
 
         else:
-            msg = 'Either provide a first and last or a number of tests'
-            raise ValueError(msg)
+            raise ValueError(arg_errmsg)
 
         assert(self.first >= 0 and self.length >= 0)
-        return self
-
-    @staticmethod
-    def enumerate(numbers, first=1, lenient=False):
-        """Take a sequence of positive numbers and assign numbers,
-        where None is given.
-
-            >>> enumerate([1, 2, None, 4])
-            [1, 2, 3, 4]
-            >>> enumerate([None, None, 2])
-            Traceback (most recent call last):
-              File "<stdin>", line 1, in <module>
-            IndexError: Testcase number 2 was already used
-            >>> enumerate([None, None, 2], lenient=True)
-            [1, 3, 2]
-
-        post conditions:
-        * Always the smallest possible integers are used (starting with `first`).
-          But if a high integer is given, this one is used for continuation.
-        * `enumerate` returns a sequence of positive numbers or
-          raises an IndexError.
-        * If `numbers` uses a number twice, even lenient=True throws an error.
-        """
-        assigned = set()
-        fixed = set()
-        sequence = []
-        next_number = 1
-
-        reuse_errmsg = "Testcase number {} was already used"
-
-        def get_next_number(nr):
-            nr = first
-            while nr in assigned or nr in fixed:
-                nr += 1
-            return nr
-
-        for nr in numbers:
-            if nr is None:
-                next_number = get_next_number(next_number)
-
-                assigned.add(next_number)
-                sequence.append(next_number)
-                next_number += 1
-            else:
-                if nr < 0:
-                    raise ValueError("Testcase number must be non-negative")
-                if nr in fixed:
-                    raise IndexError(reuse_errmsg.format(nr))
-                elif nr in assigned:
-                    if not lenient:
-                        raise IndexError(reuse_errmsg.format(nr))
-                    next_number = get_next_number(next_number)
-
-                    # replace "nr" with "next_number" in assigned and sequence
-                    assigned.remove(nr)
-                    fixed.add(next_number)
-                    sequence = [e == nr and next_number or e for e in sequence]
-                    sequence.append(nr)
-
-                    next_number += 1
-                else:
-                    fixed.add(nr)
-                    sequence.append(nr)
-                    if nr > next_number:
-                        next_number = nr + 1
-
-        return sequence
 
     def __len__(self):
         return self.length
@@ -387,19 +314,11 @@ class TapActualNumbering(object):
 
     def __contains__(self, tc_number):
         """Is `tc_number` within this TapNumbering range?"""
-        tc_number = int(tc_number)
-        if self.length == 0:
-            return False
-        else:
-            return self.first <= tc_number < self.first + self.length
+        return self.first <= tc_number and tc_number < self.first + self.length
 
-    def get_enumeration(self, lenient=True):
-        """Get enumeration for given `self.numbers`. Enumeration is the list
-        of testcase numbers like `self.numbers` but with Nones eliminated.
-
-        :param bool lenient:    Shall I fix simple errors myself?
-        """
-        return self.enumerate(self.numbers, first=self.first, lenient=lenient)
+    def enumeration(self):
+        """Get enumeration for the actual tap plan."""
+        return list(range(self.first, self.first + self.length))
 
     def inc(self):
         """Increase numbering for one new testcase"""
@@ -413,6 +332,13 @@ class TapActualNumbering(object):
         """Get range of this numbering: (min, max)"""
         return (self.first, self.first + self.length - 1)
 
+    def __getstate__(self):
+        return {'first': self.first, 'length': self.length}
+
+    def __setstate__(self, state):
+        self.first = state['first']
+        self.length = state['length']
+
     def __iter__(self):
         return iter(range(self.first, self.first + self.length))
 
@@ -422,23 +348,12 @@ class TapActualNumbering(object):
         """
         return '{:d}..{:d}'.format(self.first, self.first + self.length - 1)
 
-    def matches(self):
-        """Can `self.numbers` match `self.first` and `self.last`?"""
-        try:
-            if len(self.numbers) != self.length:
-                return False
-            enums = self.get_enumeration(lenient=True)
-            if not enums:
-                return True
-            last = self.first + self.length - 1
-            if min(enums) != self.first or max(enums) != last:
-                return False
-            return True
-        except IndexError:
-            return False
+    def __repr__(self):
+        return '<TapNumbering {}>'.format((self.first, self.length))
 
 
-class TapNumbering(list):
+class TapActualNumbering(list):
+    """TAP testcase numbering. Wrapper for a sequence of testcase numbers."""
     pass
 
 
@@ -447,19 +362,18 @@ class TapDocument(object):
     DEFAULT_VERSION = 13
 
     def __init__(self, version=DEFAULT_VERSION, skip=False):
+        # testcases and bailouts
         self.entries = []
         self.metadata = {
-            # data of first line
+            # version line
             'version': version,
-            # possibly 2+ lines
+            'version_written': False,
+            # comment lines before first testcase
             'header_comment': u'',
-            # numbering objects
-            'actual_numbering': None,
-            'numbering': TapNumbering(),
-            # data of plan
-            'range': (1, 0),
+            # TAP plan
+            'numbering': None,
             'plan_at_beginning': True,
-            'skip': skip,
+            'skip': bool(skip),
             'skip_comment': u''
         }
 
@@ -484,50 +398,40 @@ class TapDocument(object):
 
     def set_skip(self, skip_comment=u''):
         """Set skip annotation for this document"""
-        self.metadata['skip'] = True
-        self.metadata['skip_comment'] = skip_comment
+        if skip_comment:
+            self.metadata['skip'] = True
+            self.metadata['skip_comment'] = skip_comment
+        else:
+            self.metadata['skip'] = False
 
     def add_version_line(self, version=DEFAULT_VERSION):
         """Add information of version lines like 'TAP version 13'"""
         self.set_version(version)
+        self.metadata['version_written'] = True
 
     def add_header_line(self, line):
         """Add header comment line for TAP document"""
+        if line.count(os.linesep) > 1:
+            raise ValueError("Header line should only be 1 (!) line")
         self.metadata['header_comment'] += unicode(line).rstrip()
         self.metadata['header_comment'] += os.linesep
 
     def add_plan(self, first, last, skip_comment=u'', at_beginning=True):
         """Add information of a plan like '1..3 # SKIP wip'"""
-        self.metadata['range'] = (first, last)
         self.metadata['plan_at_beginning'] = bool(at_beginning)
-        self.metadata['actual_numbering'] = None
+        self.metadata['numbering'] = TapNumbering(first=first, last=last)
         if skip_comment:
             self.set_skip(skip_comment)
 
     def add_testcase(self, tc):
         """Add a ``TapTestcase`` or ``TapBailout`` instance `tc`"""
-        self.metadata['numbering'].append(tc.number)
-        self.metadata['actual_numbering'] = None
         self.entries.append(copy.deepcopy(tc))
 
     def add_bailout(self, bo):
         """Add a ``TapBailout`` instance `bo` to this document"""
-        self.metadata['actual_numbering'] = None
         self.entries.append(bo.copy())
 
     # processing
-
-    def _get_actual_numbering(self):
-        """Compute the actual numbering"""
-        if self.metadata['actual_numbering']:
-            return  # already there
-        if 'range' not in self.metadata:
-            raise TapMissingPlan('Plan required before generation of numbering')
-
-        self.metadata['actual_numbering'] = TapActualNumbering(
-            self.metadata['range'],
-            self.metadata['numbering']
-        )
 
     @staticmethod
     def create_plan(first, last, comment=u'', skip=False):
@@ -552,8 +456,9 @@ class TapDocument(object):
 
     def __len__(self):
         """Return number of testcases in this document"""
-        self._get_actual_numbering()
-        return len(self.metadata['actual_numbering'])
+        if self.metadata['numbering']:
+            return len(self.metadata['numbering'])
+        return self.actual_length()
 
     def actual_length(self):
         """Return actual number of testcases in this document"""
@@ -565,12 +470,19 @@ class TapDocument(object):
 
     def range(self):
         """Get range like ``(1, 2)`` for this document"""
-        self._get_actual_numbering()
-        return self.metadata['actual_numbering'].range()
+        if not self.metadata['numbering']:
+            return (1, 0)
+
+        return self.metadata['numbering'].range()
 
     def actual_range(self):
         """Get actual range"""
-        return (1, self.actual_length())
+        if not self.metadata['numbering'] or not self.entries:
+            return (1, 0)
+
+        validator = TapDocumentValidator(self)
+        enum = validator.enumeration()
+        return (min(enum), max(enum))
 
     def plan(self, comment=u'', skip=False):
         """Get plan for this document"""
@@ -583,11 +495,6 @@ class TapDocument(object):
         options = {'comment': self.metadata['skip_comment'],
                    'skip': self.metadata['skip']}
         return self.create_plan(*self.actual_range(), **options)
-
-    def __contains__(self, tc_id):
-        """Does this document contain a testcase with id `tc_id`?"""
-        self._get_actual_numbering()
-        return tc_id in self.metadata['actual_numbering']
 
     def count_failed(self):
         """How many testcases which are 'not ok' are there?"""
@@ -627,19 +534,49 @@ class TapDocument(object):
                 return entry.message
         return None
 
-    def range_matches(self):
-        """Does the plan correspond to the stored testcases?"""
-        self._get_actual_numbering()
-        return self.metadata['actual_numbering'].matches()
-
     def valid(self):
         """Is this document valid?"""
-        return validate(self)
+        validator = TapDocumentValidator(self)
+        return validator.valid()
+
+    def __contains__(self, num):
+        """Does testcase exist in document?
+        It exists iff a testcase object with this number or number 'None'
+        exists as entry in doc which corresponds to this number.
+        """
+        validator = TapDocumentValidator(self)
+        enum = validator.enumeration()
+        try:
+            if self.entries[enum.index(int(num))] is None:
+                return False
+            else:
+                return True
+        except (ValueError, IndexError):
+            return False
 
     def __getitem__(self, num):
-        self._get_actual_numbering()
-        enum = self.metadata['actual_numbering'].get_enumeration()
-        return copy.deepcopy(self.entries[enum[num]])
+        """Return testcase with the given number.
+        Returns copy of testcase, returns None (if range specifies existence)
+        or raises IndexError (if testcase does not exist at all).
+        """
+        try:
+            num = int(num)
+        except ValueError:
+            return False
+
+        validator = TapDocumentValidator(self)
+        enum = validator.enumeration()
+        if 0 <= num < len(enum):
+            nr = 0
+            for entry in self.entries:
+                if entry.is_testcase:
+                    if nr == enum[num]:
+                        e = copy.deepcopy(entry)
+                        e.number = num
+                        return e
+                    nr += 1
+        else:
+            raise IndexError("No testcase with number {} exists".format(num))
 
     def __iter__(self):
         """Get iterator for testcases"""
@@ -649,6 +586,8 @@ class TapDocument(object):
         """Return state of this object"""
         state = copy.copy(self.metadata)
         state['entries'] = [entry.__getstate__() for entry in self.entries]
+        if state['numbering']:
+            state['numbering'] = state['numbering'].__getstate__()
         return state
 
     def __setstate__(self, state):
@@ -657,13 +596,22 @@ class TapDocument(object):
         self.metadata = {}
 
         for key, value in state.iteritems():
-            if key == 'entries':
+            if key == u'entries':
                 for entry in value:
                     tc = TapTestcase()
                     tc.__setstate__(entry)
                     self.entries.append(tc)
+            elif key == u'numbering':
+                self.metadata[key] = TapNumbering(tests=0)
+                self.metadata[key].__setstate__(value)
             else:
                 self.metadata[key] = value
+
+        keys_exist = ['version', 'version_written', 'header_comment',
+                      'numbering', 'skip', 'skip_comment']
+        for key in keys_exist:
+            if key not in self.metadata:
+                raise ValueError('Missing key {} in state'.format(key))
 
     def copy(self):
         """Return a copy of this object"""
@@ -685,12 +633,16 @@ class TapDocument(object):
 
     def __unicode__(self):
         """Unicode representation of TAP document"""
+        out = u''
         # version line
-        out = u'TAP version {:d}{}'.format(self.metadata['version'], os.linesep)
+        if self.metadata['version_written']:
+            out += u'TAP version {:d}'.format(self.metadata['version'])
+            out += os.linesep
         # header comments
         out += self.metadata['header_comment']
         # [possibly] plan
-        out += self.plan() if self.metadata['plan_at_beginning'] else u''
+        if self.metadata['plan_at_beginning']:
+            out += self.plan() + os.linesep
         # testcases and bailouts
         for entry in self.entries:
             out += unicode(entry)
@@ -700,60 +652,253 @@ class TapDocument(object):
         return out
 
 
+class TapDocumentValidator(object):
+    """TAP testcase numbering. In TAP documents it is called 'the plan'."""
+
+    def __init__(self, doc, lenient=True):
+        """Constructor.
+
+        :param TapDocument doc:   the TAP document to validate
+        """
+        self.lenient = lenient
+        self.skip = doc.skip
+        self.bailed = doc.bailed()
+
+        if not doc.metadata['numbering']:
+            msg = "Document cannot be validated. Document requires plan."
+            raise TapMissingPlan(msg)
+
+        # retrieve numbers and range
+        self.numbers = []
+        self.validity = True
+        for entry in doc.entries:
+            if entry.is_testcase:
+                self.numbers.append(entry.number)
+                if not entry.field and not entry.skip:
+                    self.validity = False
+        self.range = doc.range()
+
+        # prepare enumeration
+        self.enum = None
+
+    def test_range_validity(self):
+        """Is `range` valid for `numbers`?"""
+        # more testcases than allowed
+        length = self.range[1] - self.range[0] + 1
+        if length < len(self.numbers):
+            msg = "More testcases provided than allowed by plan"
+            raise TapInvalidNumbering(msg)
+
+        # Is some given number outside of range?
+        for nr in self.numbers:
+            if nr is not None:
+                if not (self.range[0] <= nr <= self.range[1]):
+                    msg = "Testcase number {} is outside of plan {}..{}"
+                    raise TapInvalidNumbering(msg.format(nr, *self.range))
+
+        ## Is some given number used twice?
+        ## Remark. Is tested by enumerate 
+        #numbers = set()
+        #for index, nr in enumerate(self.numbers):
+        #    if nr is not None:
+        #        if nr in numbers:
+        #            msg = "Testcase number {} used twice at indices {} and {}"
+        #            first_index = self.numbers.index(nr)
+        #            raise ValueError(msg.format(nr, index, first_index))
+        #        numbers.add(nr)
+
+    @staticmethod
+    def enumerate(numbers, first=1, lenient=False):
+        """Take a sequence of positive numbers and assign numbers,
+        where None is given::
+
+            >>> enumerate([1, 2, None, 4])
+            [1, 2, 3, 4]
+            >>> enumerate([None, None, 2])
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            ValueError: Testcase number 2 was already used
+            >>> enumerate([None, None, 2], lenient=True)
+            [1, 3, 2]
+
+        Post conditions:
+        * Always the smallest possible integers are assigned (starting with `first`).
+          But if a high integer is given, this one is used instead.
+        * Returns a sequence of positive numbers or raises a ValueError.
+        """
+        assigned = set()
+        fixed = set()
+        sequence = []
+        next_number = None
+
+        reuse_errmsg = "Testcase number {} was already used"
+
+        def get_next_number(nr):
+            nr = first
+            while nr in assigned or nr in fixed:
+                nr += 1
+            return nr
+
+        for nr in numbers:
+            if nr is None:
+                next_number = get_next_number(next_number)
+
+                assigned.add(next_number)
+                sequence.append(next_number)
+                next_number += 1
+            else:
+                if nr in fixed:
+                    raise ValueError(reuse_errmsg.format(nr))
+                elif nr in assigned:
+                    if not lenient:
+                        raise ValueError(reuse_errmsg.format(nr))
+                    next_number = get_next_number(next_number)
+
+                    # replace "nr" with "next_number" in assigned and sequence
+                    assigned.remove(nr)
+                    fixed.add(next_number)
+                    sequence = [e == nr and next_number or e for e in sequence]
+                    sequence.append(nr)
+
+                    next_number += 1
+                else:
+                    fixed.add(nr)
+                    sequence.append(nr)
+                    if nr > next_number:
+                        next_number = nr + 1
+
+        return sequence
+
+    def all_exist(self):
+        """Do all testcases in specified `range` exist?"""
+        self.enumeration()
+        try:
+            for i in range(self.range[0], self.range[1] + 1):
+                self.enum.index(i)
+            return True
+        except ValueError:
+            return False
+
+    def __nonzero__(self):
+        return self.valid()
+
+    def enumeration(self, lenient=True):
+        """Get enumeration for given `self.numbers`. Enumeration is the list
+        of testcase numbers like `self.numbers` but with Nones eliminated.
+        Thus it maps all indices of testcase entries to testcase numbers.
+
+        :param bool lenient:    Shall I fix simple errors myself?
+        """
+        if not self.enum:
+            self.test_range_validity()
+            self.enum = self.enumerate(self.numbers, self.range[0], lenient)
+
+        return self.enum
+
+    def __iter__(self):
+        return iter(self.enumeration())
+
+    def __repr__(self):
+        return '<TapDocumentValidator {} {}{}>'.format(self.numbers, self.range,
+            self.enum and ' with enumeration' or '')
+
+    def sanity_check(self, lenient=True):
+        """Raise any errors which indicate that this document is wrong.
+        This method performs a subset of checks of `valid`, but raises errors
+        with meaningful messages unlike `valid` which just returns False.
+
+        :param bool lenient:    Shall I ignore more complex errors?
+        """
+        self.test_range_validity()
+        self.enumerate(self.numbers, self.range[0], lenient)
+
+    def valid(self, lenient=True):
+        """Is the given document valid, meaning that `numbers` and
+        `range` match?
+        """
+        if self.bailed:
+            return False
+        elif self.skip:
+            return True
+        elif self.enum:
+            return self.validity and self.all_exist()
+        else:
+            try:
+                self.enumeration(lenient)
+                return self.validity and self.all_exist()
+            except ValueError:
+                return False
+
+
 class TapDocumentIterator(object):
-    """Iterator over testcases. Ignores Bailouts."""
+    """Iterator over enumerated testcase entries of TAP document.
+    Returns None for non-defined testcases. Raises Bailouts.
+    """
+
     def __init__(self, doc):
-        self.current = 0
-        self.doc = doc
+        self.skip = doc.skip
+        self.entries = copy.deepcopy(doc.entries)
+        self.enum = TapDocumentValidator(doc).enumeration()
+        self.current, self.end = doc.range()
 
     def __iter__(self):
         return self
 
+    def lookup(self, num):
+        """Return testcase for given number or None"""
+        try:
+            entries_index = self.enum.index(num)
+        except ValueError:
+            return None
+
+        i = 0
+        for entry in self.entries:
+            if entry.is_testcase:
+                if entries_index == i:
+                    entry.number = num
+                    return entry
+                i += 1
+            else:
+                raise entry
+
     def next(self):
-        if self.doc.skip:
-            raise StopIteration("No entries available")
-        if self.current >= len(self.doc.entries):
-            raise StopIteration("All entries iterated")
-        else:
-            self.current += 1
-            return copy.deepcopy(self.doc.entries[self.current])
+        if self.skip:
+            raise StopIteration("Document gets skipped")
+        if self.current > self.end:
+            raise StopIteration("End of entries reached")
+
+        self.current += 1
+        return self.lookup(self.current - 1)
 
 
 class TapDocumentActualIterator(object):
-    """Iterator over actual testcase entries of TAP document.
-    Terminates either with TapBailout or StopIteration.
-    Bailout is raised at the end of document; *NOT* the correct index.
-    Returns None for non-defined testcases.
-    """
+    """Iterator over actual *un*enumerated testcases. Raises Bailouts."""
+
     def __init__(self, doc):
-        self.range = doc.actual_range()
-        self.current = self.range[0]
-        self.bailed = doc.bailed()
-        self.bailout_message = doc.bailout_message()
-        self.doc = doc
+        self.skip = doc.skip
+        self.entries = copy.deepcopy(doc.entries)
+        self.current = 0
 
     def __iter__(self):
         return self
 
     def next(self):
-        if self.doc.skip:
-            raise StopIteration("No entries available")
-        if self.current > self.range[1]:
-            if self.bailed:
-                raise TapBailout(self.bailout_message)
-            else:
-                raise StopIteration("All entries iterated")
+        if self.skip:
+            raise StopIteration("Document gets skipped")
+        if self.current >= len(self.entries):
+            raise StopIteration("All entries iterated")
         else:
+            entry = self.entries[self.current]
             self.current += 1
-            try:
-                return self.doc[self.current]
-            except IndexError:
-                return None
+            if entry.is_testcase:
+                return entry
+            else:
+                raise entry
 
 
 class TapDocumentFailedIterator(object):
     """Iterate over all failed testcases; the ones that are 'not ok'.
-    Ignores Bailouts.
+    Numbers stay 'None'. Ignores Bailouts.
     """
 
     def __init__(self, doc):
@@ -767,13 +912,13 @@ class TapDocumentFailedIterator(object):
         if self.doc.skip:
             raise StopIteration("No entries available")
         while True:
-            self.current += 1
             if self.current >= len(self.doc.entries):
                 raise StopIteration("All entries iterated")
             else:
-                tc = self.doc.entries[self.current]
-                if tc.is_testcase and not tc.field:
-                    return copy.deepcopy(self.doc.entries[self.current])
+                entry = self.doc.entries[self.current]
+                self.current += 1
+                if entry.is_testcase and not entry.field:
+                    return copy.deepcopy(entry)
 
 
 class TapDocumentTokenizer(object):
@@ -791,9 +936,9 @@ class TapDocumentTokenizer(object):
     )
     TESTCASE_REGEX = re.compile((
         r'(?P<field>(not )?ok)'
-        r'(\s+(?P<number>\d+)'
+        r'(\s+(?P<number>\d+))?'
         r'(\s+(?P<description>[^\n]*?)'
-        r'(\s+#(?P<directive>(\s+(TODO|SKIP).*?)+?))?)?)?\s*$'),
+        r'(\s+#(?P<directive>(\s+(TODO|SKIP).*?)+?))?)?\s*$'),
         flags=re.IGNORECASE
     )
     BAILOUT_REGEX = re.compile(
@@ -820,7 +965,7 @@ class TapDocumentTokenizer(object):
         match1 = self.VERSION_REGEX.match(line)
         match2 = self.PLAN_REGEX.match(line)
         match3 = self.TESTCASE_REGEX.match(line)
-        match4 = self.BAILOUT_REGEX(line)
+        match4 = self.BAILOUT_REGEX.match(line)
 
         add = lambda *x: self.pipeline.append(x)
 
@@ -830,9 +975,10 @@ class TapDocumentTokenizer(object):
             add('PLAN', (match2.group('first'), match2.group('last')),
                 self.strip_comment(match2.group('comment')))
         elif match3:
+            number = match3.group('number')
+            number = int(number) if number else None
             add('TESTCASE', match3.group('field') == 'ok',
-                int(match3.group('number')),
-                self.strip_comment(match3.group('description')),
+                number, self.strip_comment(match3.group('description')),
                 match3.group('directive'))
         elif match4:
             add('BAILOUT', match4.group('comment').strip())
@@ -868,10 +1014,9 @@ class TapDocumentTokenizer(object):
     def next(self):
         try:
             while True:
-                yield self.pipeline.popleft()
+                return self.pipeline.popleft()
         except IndexError:
-            # All tokens consumed.
-            pass
+            raise StopIteration("All tokens consumed.")
 
 
 class TapDocumentParser(object):
@@ -899,17 +1044,17 @@ class TapDocumentParser(object):
             if line.strip() == '---':
                 yaml_mode = True
             elif line.strip() == '...':
-                data.append(yamlish.load(yaml_cache))
+                data.append(YamlData(yamlish.load(yaml_cache)))
                 yaml_cache = u''
                 yaml_mode = False
             else:
                 if yaml_mode:
-                    yaml_cache += line
+                    yaml_cache += line + os.linesep
                 else:
                     if len(data) > 0 and isinstance(data[-1], basestring):
-                        data[-1] += line
+                        data[-1] += line + os.linesep
                     else:
-                        data.append(line)
+                        data.append(line + os.linesep)
         return data
 
     def warn(self, msg):
@@ -951,7 +1096,7 @@ class TapDocumentParser(object):
                 if tok[1][0] > tok[1][1] and not (tok[1] == (1, 0)):
                     self.warn("Plan defines a decreasing range.")
 
-                self.doc.add_plan(tok[1][0], tok[1][1], tok[2], state == 1)
+                self.doc.add_plan(tok[1][0], tok[1][1], tok[2], state <= 1)
                 state = 2
                 plan_written = True
             elif tok[0] == 'TESTCASE':
@@ -1020,7 +1165,7 @@ class TapContext(object):
             else:
                 raise ValueError(err_msg)
 
-        self.doc.add_plan(start, end, comment)
+        self.doc.add_plan(first=start, last=end, skip_comment=comment)
         self.plan_was_written = True
         self.last_element = 'plan'
 
@@ -1029,7 +1174,7 @@ class TapContext(object):
     def comment(self, comment):
         """Add a comment at the current position."""
         if self.doc.entries:
-            self.doc.entries[-1].append_data(comment)
+            self.doc.entries[-1].data += [comment]
         else:
             self.doc.add_header_line(comment)
         return self
@@ -1041,6 +1186,7 @@ class TapContext(object):
         tc.skip = skip
         tc.todo = todo
         if data:
+            assert hasattr(data, '__iter__') and not isinstance(data, basestring)
             tc.data += data
 
         self.doc.add_testcase(tc)
@@ -1074,18 +1220,8 @@ class TapContext(object):
 
 def validate(doc):
     """Does TapDocument `doc` represent a successful test run?"""
-    if doc.skip:
-        return True
-    if doc.bailed():
-        return False
-    if not doc.range_matches():
-        return False
-
-    for entry in TapDocumentActualIterator(doc):
-        if entry is None or not entry.field:
-            return False
-
-    return True
+    validator = TapDocumentValidator(doc)
+    return validator.valid()
 
 
 def repr_harness(doc):
@@ -1154,28 +1290,26 @@ def tapmerge(*docs):
 
 
 def parse_file(filepath, lenient=True):
-    """Parse a TAP file and return its testrun success.
+    """Parse a TAP file and return its TapDocument instance.
 
     :param unicode filepath:    A valid filepath for `open`
     :param bool lenient:        Lenient parsing? If so errors are thrown late.
-    :return bool status:        Does this file describe a successful testrun?
+    :return TapDocument doc:    TapDocument instance for this file
     """
     tokenizer = TapDocumentTokenizer()
     tokenizer.from_file(filepath)
     parser = TapDocumentParser(tokenizer, lenient)
-    doc = parser.document
-    return validate(doc)
+    return parser.document
 
 
 def parse_string(string, lenient=True):
-    """Parse the given `string` and return its testrun success.
+    """Parse the given `string` and return its TapDocument instance.
 
     :param unicode string:      A string to parse
     :param bool lenient:        Lenient parsing? If so errors are thrown late.
-    :return bool status:        Does this file describe a successful testrun?
+    :return TapDocument doc:    TapDocument instance for this string
     """
     tokenizer = TapDocumentTokenizer()
     tokenizer.from_string(string)
     parser = TapDocumentParser(tokenizer, lenient)
-    doc = parser.document
-    return validate(doc)
+    return parser.document

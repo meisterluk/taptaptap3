@@ -42,7 +42,7 @@ __docformat__ = 'reStructuredText'
 from .impl import YamlData, TapTestcase, TapActualNumbering, TapNumbering
 from .impl import TapDocument, TapDocumentIterator, TapDocumentActualIterator
 from .impl import TapDocumentFailedIterator, TapDocumentTokenizer
-from .impl import TapDocumentParser, TapStream, TapContext, validate
+from .impl import TapDocumentValidator, TapDocumentParser, TapContext, validate
 from .impl import repr_harness, tapmerge, parse_file, parse_string
 
 from .exc import TapParseError, TapMissingPlan, TapInvalidNumbering, TapBailout

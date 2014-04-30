@@ -3,14 +3,23 @@
 import sys
 sys.path.append('../..')
 
-from taptaptap import TapDocumentReader
+from taptaptap import TapDocumentValidator, parse_string, validate
 from taptaptap.exc import *
 
+import io
+import pickle
 import unittest
 
 
 def parse(source, strict=False):
-    TapDocumentReader(lenient=not strict).from_string(source)
+    return parse_string(source, lenient=not strict)
+
+
+def validate_manually(doc):
+    # raises errors in case of errors
+    val = TapDocumentValidator(doc)
+    val.sanity_check()
+    return val.valid()
 
 
 class TestExceptions(unittest.TestCase):
@@ -19,33 +28,48 @@ class TestExceptions(unittest.TestCase):
         no_plan            = 'not ok\n'
         no_integer_version = 'TAP version 13h\n1..1\nok\n'
         invalid_plan       = '1..1b\nok\n'
-        invalid_testcase   = '1..1\nok 1c\n'
         negative_plan      = '1..0\n '
 
-        self.assertRaises(TapInvalidNumbering, parse, two_tcs1)
-        self.assertRaises(TapInvalidNumbering, parse, two_tcs1, True)
+        # two_tcs1
+        two_tcs1_doc = parse(two_tcs1, False)
+        self.assertRaises(TapInvalidNumbering, validate_manually, two_tcs1_doc)
+        two_tcs1_doc = parse(two_tcs1, True)
+        self.assertRaises(TapInvalidNumbering, validate_manually, two_tcs1_doc)
 
-        self.assertRaises(TapMissingPlan, parse, no_plan)
-        self.assertRaises(TapMissingPlan, parse, no_plan, True)
+        no_plan_doc = parse(no_plan, False)
+        self.assertRaises(TapMissingPlan, validate_manually, no_plan_doc)
+        no_plan_doc = parse(no_plan, True)
+        self.assertRaises(TapMissingPlan, validate_manually, no_plan_doc)
 
-        parse(no_integer_version)
         self.assertRaises(TapParseError, parse, no_integer_version, True)
 
-        self.assertRaises(TapMissingPlan, parse, invalid_plan)
+        invalid_plan_doc = parse(invalid_plan, False)
+        self.assertRaises(TapMissingPlan, validate_manually, invalid_plan_doc)
         self.assertRaises(TapParseError, parse, invalid_plan, True)
 
-        parse(invalid_testcase)
-        self.assertRaises(TapParseError, parse, invalid_testcase, True)
-
-        parse(negative_plan)
+        neg_plan_doc = parse(negative_plan, False)
+        validate_manually(neg_plan_doc)
         self.assertRaises(TapParseError, parse, negative_plan, True)
 
     def testBailout(self):
         try:
-            raise TapBailout("Message")
+            raise TapBailout('Message')
             self.assertTrue(False)
         except TapBailout as e:
             self.assertIn('Bail out!', str(e))
+
+    def testPickle(self):
+        def trypickle(obj):
+            dump_file = io.BytesIO()
+            pickle.dump(obj, dump_file)
+            dump_file.seek(0)
+            return pickle.load(dump_file)
+
+        bailout = TapBailout('')
+        bailout.data = ['Hello World', 'Hi', 'ho']
+        bailout = trypickle(bailout)
+        self.assertEquals(bailout.message, 'Hello World')
+        self.assertEquals(';'.join(bailout.data), 'Hello World;Hi;ho')
 
 if __name__ == '__main__':
     unittest.main()

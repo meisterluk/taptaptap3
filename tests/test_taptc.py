@@ -4,7 +4,7 @@
 import sys
 sys.path.append('../..')
 
-from taptaptap import TapTestcase, YamlData, TapActualNumbering, TapNumbering
+from taptaptap import TapTestcase, YamlData, TapActualNumbering, TapInvalidNumbering, TapNumbering
 from taptaptap.exc import *
 
 import io
@@ -202,231 +202,109 @@ class TestTapTestcase(unittest.TestCase):
         tc.data = [YamlData([u'item 1', u'item 2', u'item 3'])]
 
         self.assertEquals(u'not ok 42 - Test "string representation" '
-            u'of ümläuts # SKIP work in progress TODO open for discussion \n'
+            u'of ümläuts # SKIP work in progress TODO open for discussion\n'
             u'  ---\n  - item 1\n  - item 2\n  - item 3\n  ...\n', unicode(tc))
 
 
-class TestTapActualNumbering(unittest.TestCase):
-    def testConstructorAndFirstLength(self):
-        obj = TapActualNumbering((1, 0), [])
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 0)
+class TestTapNumbering(unittest.TestCase):
+    def testConstructor(self):
+        num = TapNumbering(first=1, last=1)
+        self.assertEquals(len(num), 1)
+        self.assertNotIn(0, num)
+        self.assertIn(1, num)
+        self.assertNotIn(2, num)
 
-        obj = TapActualNumbering((1, 1), [1])
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 1)
+        num = TapNumbering(first=1, last=0)
+        self.assertEquals(len(num), 0)
+        self.assertNotIn(0, num)
+        self.assertNotIn(1, num)
+        self.assertNotIn(2, num)
 
-        obj = TapActualNumbering((42, 50), [])
-        self.assertEquals(obj.first, 42)
-        self.assertEquals(len(obj), 9)
+        num = TapNumbering(first=1, last=3)
+        self.assertEquals(len(num), 3)
+        self.assertIn(1, num)
+        self.assertIn(2, num)
+        self.assertIn(3, num)
+        self.assertNotIn(4, num)
 
-        obj = TapActualNumbering((42, 50), range(42, 51))
-        self.assertEquals(obj.first, 42)
-        self.assertEquals(len(obj), 9)
+        num = TapNumbering(tests=3)
+        self.assertEquals(len(num), 3)
+        self.assertNotIn(-3, num)
+        self.assertNotIn(0, num)
+        self.assertIn(1, num)
+        self.assertIn(2, num)
+        self.assertIn(3, num)
+        self.assertNotIn(4, num)
 
-        obj = TapActualNumbering((42, 50), range(42, 52))
-        self.assertEquals(obj.first, 42)
-        self.assertEquals(len(obj), 9)
+        num = TapNumbering(first=42, last=567)
+        self.assertEquals(len(num), 526)
+        self.assertNotIn(4, num)
+        self.assertNotIn(41, num)
+        self.assertIn(42, num)
+        self.assertIn(106, num)
+        self.assertIn(526, num)
+        self.assertNotIn(568, num)
 
-    def testInitRange(self):
-        obj = TapActualNumbering().init_range(first=1, last=1, strict=False)
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 1)
+        num = TapNumbering(first=5, last=3, lenient=True)
+        self.assertEquals(len(num), 0)
 
-        obj = TapActualNumbering().init_range(first=1, last=0, strict=False)
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 0)
+        self.assertTrue(bool(num))
+        self.assertRaises(ValueError, TapNumbering, first=1, last=3, tests=2)
+        self.assertRaises(ValueError, TapNumbering,
+                          first=None, last=None, tests=None)
+        self.assertRaises(TapInvalidNumbering, TapNumbering,
+                          first=5, last=3, lenient=False)
 
-        # strict is False per default
-        obj = TapActualNumbering().init_range(first=4, last=3)
-        self.assertEquals(obj.first, 4)
-        self.assertEquals(len(obj), 0)
-
-        self.assertRaises(TapInvalidNumbering, lambda:
-            TapActualNumbering().init_range(first=4, last=3, strict=True))
-
-        obj = TapActualNumbering().init_range(first=5, last=12)
-        self.assertEquals(obj.first, 5)
-        self.assertEquals(len(obj), 8)
-
-        self.assertRaises(ValueError, lambda: TapActualNumbering() \
-            .init_range(first=None, last=None, tests=None))
-
-        # Use tests
-        obj = TapActualNumbering().init_range(tests=10)
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 10)
-
-        obj = TapActualNumbering().init_range(tests=0)
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 0)
-
-        obj = TapActualNumbering().init_range(tests=256.8, strict=False)
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 256)
-
-    def testContains(self):
-        def valuetest(obj, intrange):
-            for i in xrange(*intrange):
-                self.assertIn(i, obj)
-            self.assertNotIn(intrange[0] - 200, obj)
-            self.assertNotIn(intrange[0] - 2, obj)
-            self.assertNotIn(intrange[0] - 1, obj)
-            self.assertNotIn(intrange[1] + 1, obj)
-            self.assertNotIn(intrange[1] + 2, obj)
-            self.assertNotIn(intrange[1] + 3, obj)
-            self.assertNotIn(intrange[1] + 6, obj)
-            self.assertNotIn(intrange[1] + 10, obj)
-            self.assertNotIn(intrange[1] + 256, obj)
-
-        zero = TapActualNumbering((1, 0), [])
-        one = TapActualNumbering((1, 1), [1])
-        twenty = TapActualNumbering((1, 20), range(20))
-        one_to_10 = TapActualNumbering((1, 10), range(10))
-        one_to_one = TapActualNumbering((1, 1), [1])
-        one_to_zero = TapActualNumbering((1, 0), [])
-        five_to_10 = TapActualNumbering((5, 10), range(5, 11))
-        five_to_five = TapActualNumbering((5, 5), [5])
-        five_to_three = TapActualNumbering((5, 3), [3])
-
-        self.assertFalse(0 in zero)
-        self.assertFalse(-2 in zero)
-        self.assertFalse(10 in zero)
-
-        self.assertFalse(-25 in one)
-        self.assertFalse(0 in one)
-        self.assertTrue(1 in one)
-        self.assertFalse(2 in one)
-        self.assertFalse(42 in one)
-
-        valuetest(twenty, [1, 21])
-        valuetest(one_to_10, [1, 11])
-        valuetest(one_to_one, [1, 2])
-        valuetest(five_to_10, [5, 11])
-        valuetest(five_to_five, [5, 6])
-
-        self.assertFalse(-2 in one_to_zero)
-        self.assertFalse(0 in one_to_zero)
-        self.assertFalse(1 in one_to_zero)
-        self.assertFalse(2 in one_to_zero)
-
-        self.assertFalse(1 in five_to_three)
-        self.assertFalse(3 in five_to_three)
-        self.assertFalse(4 in five_to_three)
-        self.assertFalse(5 in five_to_three)
-        self.assertFalse(6 in five_to_three)
-
-    def testGetEnumeration(self):
-        obj = TapActualNumbering((1, 0), [])
-        self.assertEquals(obj.get_enumeration(), [])
-
-        obj = TapActualNumbering((1, 1), [1])
-        self.assertEquals(obj.get_enumeration(), [1])
-
-        obj = TapActualNumbering((1, 2), [1, 2])
-        self.assertEquals(obj.get_enumeration(), [1, 2])
-
-        obj = TapActualNumbering((1, 1), [None])
-        self.assertEquals(obj.get_enumeration(), [1])
-
-        obj = TapActualNumbering((1, 2), [None, None])
-        self.assertEquals(obj.get_enumeration(), [1, 2])
-
-        obj = TapActualNumbering((5, 7), [5, 6, 7])
-        self.assertEquals(obj.get_enumeration(), [5, 6, 7])
-
-        obj = TapActualNumbering((5, 7), [5, 7, None])
-        self.assertEquals(obj.get_enumeration(True), [5, 7, 6])
-
-        # error cases
-
-        obj = TapActualNumbering((5, 5), [5, 5])
-        self.assertRaises(IndexError, lambda: obj.get_enumeration())
-
-        obj = TapActualNumbering((5, 18), [5, 6, 7, 8, 6])
-        self.assertRaises(IndexError, lambda: obj.get_enumeration())
-
+    def testEnumeration(self):
+        num = TapNumbering(tests=5)
+        self.assertEquals(num.enumeration(), [1, 2, 3, 4, 5])
 
     def testInc(self):
-        obj = TapActualNumbering((1, 0), [])
-        obj.inc()
-        self.assertEquals(obj.first, 1)
-        self.assertEquals(len(obj), 1)
+        num = TapNumbering(tests=5)
+        self.assertTrue(4 in num)
+        self.assertTrue(5 in num)
+        self.assertFalse(6 in num)
+        num.inc()
+        self.assertTrue(5 in num)
+        self.assertTrue(6 in num)
+        self.assertFalse(7 in num)
 
-        obj = TapActualNumbering((25, 25), [25])
-        obj.inc()
-        obj.inc()
-        obj.inc()
-        self.assertEquals(obj.first, 25)
-        self.assertEquals(len(obj), 4)
+    def testNormalizedRangeAndPlan(self):
+        num = TapNumbering(first=5, last=13)
+        self.assertEquals(num.normalized_plan(), '1..9')
+        self.assertEquals(num.range(), (5, 13))
+        num.inc()
+        self.assertEquals(num.normalized_plan(), '1..10')
+        self.assertEquals(num.range(), (5, 14))
 
-        obj = TapActualNumbering((5, 10), [5, 6, 7, 8, 9, 10])
-        obj.inc()
-        obj.inc()
-        self.assertEquals(obj.first, 5)
-        self.assertEquals(len(obj), 8)
+        num = TapNumbering(tests=0)
+        self.assertEquals(num.normalized_plan(), '1..0')
+        self.assertEquals(num.range(), (1, 0))
 
-    def testRange(self):
-        obj = TapActualNumbering((1, 0), [])
-        self.assertEquals(obj.range(), (1, 0))
-        self.assertEquals(unicode(obj), u'1..0')
+    def testPickle(self):
+        dump_file = io.BytesIO()
 
-        obj = TapActualNumbering((1, 2), [1, 2])
-        self.assertEquals(obj.range(), (1, 2))
-        self.assertEquals(unicode(obj), u'1..2')
+        num = TapNumbering(tests=16)
+        pickle.dump(num, dump_file)
+        dump_file.seek(0)
 
-        obj = TapActualNumbering((256, 1024), range(256, 1025))
-        self.assertEquals(obj.range(), (256, 1024))
-        self.assertEquals(unicode(obj), u'256..1024')
+        num = pickle.load(dump_file)
+        self.assertEquals(num.range(), (1, 16))
 
     def testIter(self):
-        def expect(num_range, expected_iterations):
-            obj = TapActualNumbering(num_range, [])
-            for num, i in enumerate(obj):
-                self.assertEquals(i, expected_iterations[num])
+        num = TapNumbering(first=4, last=10)
+        iters = [4, 5, 6, 7, 8, 9, 10]
+        for entry in num:
+            iters.remove(entry)
+        if iters:
+            raise ValueError("Not all numbers iterated")
+ 
 
-        expect((1, 0), [])
-        expect((1, 1), [1])
-        expect((1, 2), [1, 2])
-        expect((1, 10), range(1, 11))
-        expect((42, 50), range(42, 51))
-
-    def testMatches(self):
-        obj = TapActualNumbering((1, 0), [])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((1, 1), [1])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((1, 1), [2])
-        self.assertEquals(obj.matches(), False)
-
-        obj = TapActualNumbering((1, 3), [1, 2, 3])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((1, 3), [1, None, 3])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((1, 3), [None, None, None])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((1, 3), [None, None, None, None])
-        self.assertEquals(obj.matches(), False)
-
-        obj = TapActualNumbering((6, 10), [6, 7, 8, 9, 10])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((6, 10), [6, 7, 8, 9, None])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((6, 10), [6, 7, 8, 9, 7])
-        self.assertEquals(obj.matches(), False)
-
-        obj = TapActualNumbering((6, 8), [6, None, 7])
-        self.assertEquals(obj.matches(), True)
-
-        obj = TapActualNumbering((6, 9), [6, None, 7])
-        self.assertEquals(obj.matches(), False)
+class TestTapActualNumbering(unittest.TestCase):
+    def testEverything(self):
+        num = TapActualNumbering([1, None, 3])
+        self.assertIn(1, num)
+        self.assertIn(3, num)
 
 
 if __name__ == '__main__':
