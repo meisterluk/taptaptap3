@@ -12,23 +12,18 @@ Test Anything Protocol handling for cats \*rawwr*
 
 .. contents:: Table of contents
 
-``taptaptap`` provides parsers, writers and APIs to handle the Test Anything Protocol (TAP).
-The implementation focuses on the most-current TAP version 13.
+``taptaptap`` provides parsers, writers and APIs to handle the Test Anything Protocol (TAP). The implementation focuses on the most-current TAP version 13. TAP originates from the Perl community, but is a general format to document runs of testsuites. The reference to cats is just a pun for the noise of cats sneaking on floors.
 
 Compatibility
 -------------
 
 ``taptaptap`` has been tested with
-* TODO 2.6
+* python 2.7 on Linux 3.8 x86_64
 
-You can run the ``taptaptap`` testcases yourself using::
+A version for python 3.x is (not yet?) available.
 
-    ./run.sh
-
-in the tests directory. The `examples` directory contains many examples how to use ``taptaptap``.
-
-Format
-------
+The File Format
+---------------
 
 A basic introduction is given by Wikipedia. The format was specified by the Perl community.
 
@@ -36,18 +31,92 @@ A basic introduction is given by Wikipedia. The format was specified by the Perl
 * `Original specification <http://web.archive.org/web/20120730055134/http://testanything.org/wiki/index.php/TAP_specification>`_
 * `Test::Harness <https://metacpan.org/pod/release/PETDANCE/Test-Harness-2.64/lib/Test/Harness/TAP.pod#THE-TAP-FORMAT>`_
 
+Testsuite & Examples
+--------------------
+
+``taptaptap`` comes with a testsuite, which covers many special cases of the TAP format and tests the provided APIs. Please don't hesitate to report any issues_.
+
+You can run the ``taptaptap`` testcases yourself using::
+
+    ./run.sh
+
+in the tests directory. The testsuite also shows some API usage examples, but I want to provide some here. The procedural API is pretty if you are in the python REPL::
+
+    from taptaptap.proc import plan, ok, not_ok, write
+    plan(tests=10)
+    ok('Starting the robot')
+    not_ok('Starting the engine')
+    not_ok('Find the object', skip='Setup required')
+    not_ok('Terminate', skip='Setup required')
+
+    write()
+
+The output looks like this::
+
+    TAP version 13
+    1..10
+    ok 1 - Starting the robot
+    not ok 2 - Starting the engine
+    not ok 3 - Find the object  # SKIP Setup required
+    not ok 4 - Terminate  # SKIP Setup required
+
+Be aware that the state is stored within the module. This is not what you want if you are outside the REPL. The ``TapWriter`` class is more convenient in this case::
+
+    import taptaptap
+
+    writer = TapWriter()
+    writer.plan(1, 3)
+    writer.ok('This testcase went fine')
+    writer.ok('And another one')
+    writer.ok('And also the last one')
+
+If you like python's generators, you want to use ``SimpleTapCreator``:
+
+    @taptaptap.SimpleTapCreator
+    def runTests():
+        yield True
+        yield True
+        yield False
+
+    print runTests()
+
+Giving us::
+
+    1..3
+    ok
+    ok
+    not ok
+
+Or take a look at the more sophisticated ``TapCreator``. If you are a real pro, you can use ``TapDocument`` directly, which covers all possibilities of TAP.
+
 Command line tools
 ------------------
+
+You can also invoke ``taptaptap`` directly from the command line::
+
+    python -m taptaptap.__main__ some_tap_file_to_validate.tap
+
+This command will parse the file and write the file in a way how it was understand by the module. The exit code indicates its validity:
+
+0
+  Everything fine.
+1
+  The TAP file is missing some testcases or contains failed testcases
+2
+  A bailout was raised. So the testing environment crashed during the run.
 
 Pickling
 --------
 
-The ``TapDocument`` and ``TapTestcase`` objects are pickable.
+All objects are pickable.
 
-
-How to use ``taptaptap``
-------------------------
+When to use ``taptaptap``
+-------------------------
 
 Does ``taptaptap`` suite your needs?
-* It does, if you are looking for a parser and validator for your TAP documents and you don't want to care about details and just need a gentle API.
-* It does not, if you just need a high-performant TAP writer. This implementation makes a lot of sanitization checks and covers all unspecified special cases.
+It does, if you are looking for a parser and validator for your TAP documents and you don't want to care about details and just need a gentle API.
+
+best regards,
+Lukas
+
+.. _issues: https://github.com/meisterluk/taptaptap

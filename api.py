@@ -80,6 +80,10 @@ class TapWriter(object):
 
         self.doc.add_testcase(tc)
 
+    def plan(self, first, last):
+        """Create a TAP plan"""
+        self.doc.add_plan(first, last)
+
     def bailout(self, comment):
         """Create a bailout"""
         self.doc.add_bailout(comment)
