@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('../..')
-
 from taptaptap.proc import plan, ok, not_ok, write
 from taptaptap.proc import get_doc
 

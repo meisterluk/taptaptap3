@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('../..')
-
 from taptaptap import TapDocumentValidator, parse_string, validate
 from taptaptap.exc import *
 

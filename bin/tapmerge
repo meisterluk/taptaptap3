@@ -3,12 +3,12 @@
 """Merge two TAP files"""
 
 import sys
-import tap
+import taptaptap
 import argparse
 
 def main(args):
-    doc1 = tap.parse_file(args.file1)
-    doc2 = tap.parse_file(args.file2)
+    doc1 = taptaptap.parse_file(args.file1)
+    doc2 = taptaptap.parse_file(args.file2)
 
     doc3 = doc1.merge(doc2)
 

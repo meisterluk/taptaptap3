@@ -2,9 +2,6 @@
 
 """Test the iterator over a document"""
 
-import sys
-sys.path.append('../..')
-
 import os.path
 import subprocess
 import taptaptap

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('../..')
-
 from taptaptap import YamlData, TapContext
 from taptaptap import TapDocument, TapNumbering, TapTestcase
 from taptaptap import TapDocumentIterator, TapDocumentActualIterator

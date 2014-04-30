@@ -15,6 +15,10 @@
     (C) 2014, Lukas Prokop, BSD 3-clause
 """
 
+def readfile(fname):
+    with open(os.path.join(os.path.dirname(__file__), fname)) as fp:
+        return fp.read()
+
 setup(
     name='taptaptap',
     version='1.0.0-stable',
@@ -23,7 +27,7 @@ setup(
     author='Lukas Prokop',
     author_email='admin@lukas-prokop.at',
     description='Test Anything Protocol handling for cats',
-    long_description=__doc__,
+    long_description=readfile(__,
     packages=['taptaptap'],
     platforms='any',
     classifiers=[
@@ -41,5 +45,5 @@ setup(
         'Topic :: System :: Logging',
         'Topic :: System :: Systems Administration'
     ],
-    test_suite='taptaptap.tests.run'
+    test_suite='tests.run'
 )

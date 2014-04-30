@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('../..')
-
 from taptaptap.proc import *
 
 plan(15)

@@ -4,9 +4,6 @@
 using the files in the `examples` directory
 """
 
-import sys
-sys.path.append('../..')
-
 import os.path
 import subprocess
 import taptaptap

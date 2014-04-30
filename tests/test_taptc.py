@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-sys.path.append('../..')
-
 from taptaptap import TapTestcase, YamlData, TapActualNumbering, TapInvalidNumbering, TapNumbering
 from taptaptap.exc import *
 

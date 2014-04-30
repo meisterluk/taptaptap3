@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PYTHONPATH=$PYTHONPATH":.."
+
 tests=('test_taptc' 'test_tapdoc' 'test_exc' 'test_unittestrunner' \
        'test_examples' 'test_examples_programmatically' 'test_iterator' \
        'test_cli' 'test_proc_001' 'test_proc_002' 'test_proc_003' \

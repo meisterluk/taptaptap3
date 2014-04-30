@@ -2,9 +2,6 @@
 
 """Testcases for CLI tools"""
 
-import sys
-sys.path.append('../..')
-
 import unittest
 import subprocess
 import taptaptap
