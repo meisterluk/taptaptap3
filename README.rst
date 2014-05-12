@@ -1,5 +1,5 @@
-Introduction
-============
+Documentation
+=============
 
 :name:          taptaptap
 :author:        Lukas Prokop
@@ -84,7 +84,7 @@ Giving us::
     ok
     not ok
 
-Or take a look at the more sophisticated ``TapCreator``. If you are a real pro, you can use ``TapDocument`` directly, which covers all possibilities of TAP.
+Or take a look at the more sophisticated ``TapCreator``. If you are a real expert, you can use ``TapDocument`` directly, which covers all possibilities of TAP.
 
 Command line tools
 ------------------
@@ -93,12 +93,12 @@ You can also invoke ``taptaptap`` directly from the command line::
 
     python -m taptaptap.__main__ some_tap_file_to_validate.tap
 
-This command will parse the file and write the file in a way how it was understand by the module. The exit code indicates its validity:
+This command will parse the file and write the file in a way how it was understood by the module. The exit code indicates its validity:
 
 0
   Everything fine.
 1
-  The TAP file is missing some testcases or contains failed testcases
+  The TAP file is missing some testcases or contains failed testcases.
 2
   A bailout was raised. So the testing environment crashed during the run.
 
@@ -114,6 +114,6 @@ Does ``taptaptap`` suite your needs?
 It does, if you are looking for a parser and validator for your TAP documents and you don't want to care about details and just need a gentle API.
 
 best regards,
-Lukas
+meisterluk
 
 .. _issues: https://github.com/meisterluk/taptaptap

@@ -279,8 +279,7 @@ def SimpleTapCreator(func, **tap_kwargs):
                 doc.add_testcase(tc)
                 count += 1
             if not plan_added:
-                doc.add_plan(tests=count, skip_comment=skip_comment)
-                plan_added = True
+                doc.add_plan(first=1, last=count, skip_comment=skip_comment)
         except TapBailout:
             doc.add_bailout()
         return unicode(doc)
