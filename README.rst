@@ -61,7 +61,7 @@ Be aware that the state is stored within the module. This is not what you want i
 
     import taptaptap
 
-    writer = TapWriter()
+    writer = taptaptap.TapWriter()
     writer.plan(1, 3)
     writer.ok('This testcase went fine')
     writer.ok('And another one')

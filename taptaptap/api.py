@@ -262,17 +262,25 @@ def SimpleTapCreator(func, **tap_kwargs):
     version = tap_kwargs.get('version', TapDocument.DEFAULT_VERSION)
     skip = tap_kwargs.get('skip', False)
     doc = TapDocument(version=version, skip=skip)
+    plan_added = False
+    skip_comment = tap_kwargs.get('skip_comment', u'')
 
     if 'first' in tap_kwargs and 'last' in tap_kwargs:
-        doc.add_plan(first=tap_kwargs['first'], last=tap_kwargs['last'],
-                        skip_comment=tap_kwargs.get('skip_comment', u''))
+        doc.add_plan(first=tap_kwargs['first'],
+                     last=tap_kwargs['last'], skip_comment=skip_comment)
+        plan_added = True
 
     def inner(*args, **kwargs):
         try:
+            count = 0
             for result in func(*args, **kwargs):
                 tc = TapTestcase()
                 tc.field = bool(result)
                 doc.add_testcase(tc)
+                count += 1
+            if not plan_added:
+                doc.add_plan(tests=count, skip_comment=skip_comment)
+                plan_added = True
         except TapBailout:
             doc.add_bailout()
         return unicode(doc)
