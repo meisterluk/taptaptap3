@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from taptaptap.proc import plan, ok, not_ok, out
+from taptaptap.proc import plan, not_ok, out
 
 plan(tests=1, tapversion=12, skip='environment does not fit')
 not_ok('TypeError')

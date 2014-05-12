@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from taptaptap import TapTestcase, YamlData, TapActualNumbering, TapInvalidNumbering, TapNumbering
-from taptaptap.exc import *
+from taptaptap import TapTestcase, YamlData
+from taptaptap import TapActualNumbering, TapNumbering
+from taptaptap.exc import TapInvalidNumbering
 
 import io
 import pickle
@@ -199,8 +200,8 @@ class TestTapTestcase(unittest.TestCase):
         tc.data = [YamlData([u'item 1', u'item 2', u'item 3'])]
 
         self.assertEquals(u'not ok 42 - Test "string representation" '
-            u'of ümläuts # SKIP work in progress TODO open for discussion\n'
-            u'  ---\n  - item 1\n  - item 2\n  - item 3\n  ...\n', unicode(tc))
+            u'of ümläuts  # SKIP work in progress TODO open for discussion\n'
+            u'---\n- item 1\n- item 2\n- item 3\n...\n', unicode(tc))
 
 
 class TestTapNumbering(unittest.TestCase):
@@ -295,7 +296,7 @@ class TestTapNumbering(unittest.TestCase):
             iters.remove(entry)
         if iters:
             raise ValueError("Not all numbers iterated")
- 
+
 
 class TestTapActualNumbering(unittest.TestCase):
     def testEverything(self):

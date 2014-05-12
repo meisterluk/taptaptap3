@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from taptaptap import TapDocumentValidator, parse_string, validate
-from taptaptap.exc import *
+from taptaptap import TapDocumentValidator, parse_string
+from taptaptap.exc import TapMissingPlan, TapInvalidNumbering
+from taptaptap.exc import TapBailout, TapParseError
 
 import io
 import pickle
@@ -21,11 +22,11 @@ def validate_manually(doc):
 
 class TestExceptions(unittest.TestCase):
     def testParseError(self):
-        two_tcs1           = '1..1\nnot ok 1\nnot ok 1\n'
-        no_plan            = 'not ok\n'
+        two_tcs1 = '1..1\nnot ok 1\nnot ok 1\n'
+        no_plan = 'not ok\n'
         no_integer_version = 'TAP version 13h\n1..1\nok\n'
-        invalid_plan       = '1..1b\nok\n'
-        negative_plan      = '3..0\n '
+        invalid_plan = '1..1b\nok\n'
+        negative_plan = '3..0\n '
 
         # two_tcs1
         two_tcs1_doc = parse(two_tcs1, False)

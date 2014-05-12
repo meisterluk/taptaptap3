@@ -19,8 +19,6 @@ import sys
 __all__ = ['TapParseError', 'TapMissingPlan',
            'TapInvalidNumbering', 'TapBailout']
 
-STR_ENC = sys.getdefaultencoding()
-
 
 class TapParseError(Exception):
     pass
@@ -37,16 +35,17 @@ class TapInvalidNumbering(TapParseError):
 class TapBailout(Exception):
     is_testcase = False
     is_bailout = True
+    encoding = sys.stdout.encoding
 
     def __init__(self, *args, **kwargs):
         super(TapBailout, self).__init__(*args, **kwargs)
         self.data = []
 
     def __str__(self):
-        return unicode(self).encode(STR_ENC)
+        return unicode(self).encode(self.encoding)
 
     def __unicode__(self):
-        return u'Bail out! {}{}{}'.format(self.message, os.linesep, \
+        return u'Bail out! {}{}{}'.format(self.message, os.linesep,
                                           os.linesep.join(self.data))
 
     def copy(self, memo=None):

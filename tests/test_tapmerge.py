@@ -5,8 +5,8 @@ import os.path
 import taptaptap
 import unittest
 
-
 e = lambda x: os.path.join('../examples', x)
+
 
 def parse_file(x):
     with codecs.open(x, encoding='utf-8') as fp:
@@ -14,7 +14,6 @@ def parse_file(x):
         for line in fp.readlines():
             if line and not line.startswith('## '):
                 content += line
-        
         return taptaptap.parse_string(content)
 
 
@@ -49,7 +48,8 @@ class MergeTapDocuments(unittest.TestCase):
         self.assertEquals(merged.count_not_ok(), 2)
         self.assertEquals(merged.count_todo(), 2)
         self.assertEquals(merged.count_skip(), 0)
-        self.assertEquals(merged.bailout_message(), u"Couldn't connect to database.")
+        self.assertEquals(merged.bailout_message(),
+                          u"Couldn't connect to database.")
         self.assertIn(56, merged)
 
         self.assertEquals(unicode(merged), unicode(ref))

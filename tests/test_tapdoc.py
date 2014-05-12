@@ -1,16 +1,10 @@
 #!/usr/bin/env python
 
-from taptaptap import YamlData, TapWrapper
-from taptaptap import TapDocument, TapNumbering, TapTestcase
-from taptaptap import TapDocumentIterator, TapDocumentActualIterator
-from taptaptap import TapDocumentFailedIterator
-from taptaptap.exc import *
+from taptaptap import TapDocument, TapTestcase, TapDocumentIterator
+from taptaptap import TapDocumentFailedIterator, TapDocumentActualIterator
+from taptaptap.exc import TapBailout
 
 import unittest
-
-
-def parse(source, strict=False):
-    TapDocumentReader().from_string(source, lenient=not strict)
 
 
 class TestTapDocument(unittest.TestCase):
@@ -64,14 +58,14 @@ class TestTapDocument(unittest.TestCase):
         doc.add_testcase(tc)
         self.assertIn(u'wip', unicode(doc))
         self.assertIn(u'1..5', unicode(doc))
-        self.assertIn(u'...', unicode(doc))
+        self.assertNotIn(u'...', unicode(doc))
         self.assertIn(u'88t', unicode(doc))
         self.assertIn(u'locals', unicode(doc))
 
         doc.add_bailout(TapBailout('Filesystem crashed'))
         self.assertIn(u'Bail out! Filesystem crashed', unicode(doc))
 
-    def testAdd(self):
+    def testAddHeaderLine(self):
         doc = TapDocument()
         doc.add_plan(1, 0)
 
@@ -196,7 +190,7 @@ class TestTapDocument(unittest.TestCase):
         tc1.field = True
         tc1.todo = True
         doc.add_testcase(tc1)
-        
+
         tc2 = TapTestcase()
         tc2.field = False
         tc2.todo = True
@@ -397,6 +391,7 @@ class TestTapDocumentActualIterator(unittest.TestCase):
 
         self.assertEquals(iterations, 4)
 
+
 class TestTapDocumentFailedIterator(unittest.TestCase):
     def testIter(self):
         doc = TapDocument()
@@ -415,8 +410,10 @@ class TestTapDocumentFailedIterator(unittest.TestCase):
             iterations += 1
         self.assertEquals(iterations, 10)
 
+
 class TestTapParsing(unittest.TestCase):
     pass
+
 
 class TestTapContextManager(unittest.TestCase):
     def testWrapper(self):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from taptaptap.proc import plan, ok, not_ok, out
+from taptaptap.proc import plan, ok, out
 
 plan(first=1, last=3)
 ok('Starting the program')

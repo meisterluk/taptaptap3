@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from taptaptap.proc import plan, ok, not_ok, out, bailout
+from taptaptap.proc import plan, ok, out, bailout
 
 plan(first=1, last=2)
 ok('before')

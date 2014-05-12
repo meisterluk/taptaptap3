@@ -44,7 +44,7 @@ __all__ = ['YamlData', 'TapTestcase', 'TapNumbering', 'TapActualNumbering',
            'TapDocument', 'TapDocumentValidator', 'TapDocumentIterator',
            'TapDocumentActualIterator', 'TapDocumentFailedIterator',
            'TapDocumentTokenizer', 'TapDocumentParser', 'TapProtocol',
-           'TapWrapper', 'tapmerge']
+           'TapWrapper', 'merge']
 
 
 STR_ENC = 'utf-8'
@@ -227,8 +227,8 @@ class TapTestcase(object):
     def __eq__(self, other):
         """Test equality"""
         conds = [self.field == other.field, self.number == other.number,
-            self.description == other.description,
-            self.directive == other.directive, self.data == self.data]
+                 self.description == other.description,
+                 self.directive == other.directive, self.data == self.data]
 
         # if one number is None and the other not, it's fine
         is_none = [self.number is None, other.number is None]
@@ -280,11 +280,11 @@ class TapTestcase(object):
         if desc:
             out += u'- {} '.format(desc)
         if directive:
-            out += u'# {} '.format(directive)
+            out += u' # {} '.format(directive)
         out = out.rstrip()
         if self.data:
             data = [unicode(d) for d in self.data]
-            out += os.linesep + self.indent((os.linesep).join(data), 2)
+            out += os.linesep + (os.linesep).join(data)
 
         if out.endswith(os.linesep):
             return out
@@ -469,11 +469,11 @@ class TapDocument(object):
 
         if skip:
             if not comment.strip():
-                comment = ' # SKIP'
+                comment = '  # SKIP'
             elif 'skip' not in comment.lower():
-                comment = ' # SKIP ' + comment
+                comment = '  # SKIP ' + comment
             else:
-                comment = ' # ' + comment.strip()
+                comment = '  # ' + comment.strip()
         else:
             comment = ''
 
@@ -747,7 +747,7 @@ class TapDocumentValidator(object):
                     raise TapInvalidNumbering(msg.format(nr, *self.range))
 
         ## Is some given number used twice?
-        ## Remark. Is tested by enumerate 
+        ## Remark. Is tested by enumerate
         #numbers = set()
         #for index, nr in enumerate(self.numbers):
         #    if nr is not None:
@@ -849,8 +849,8 @@ class TapDocumentValidator(object):
         return iter(self.enumeration())
 
     def __repr__(self):
-        return '<TapDocumentValidator {} {}{}>'.format(self.numbers, self.range,
-            self.enum and ' with enumeration' or '')
+        return '<TapDocumentValidator {} {}{}>'.format(self.numbers,
+            self.range, self.enum and ' with enumeration' or '')
 
     def sanity_check(self, lenient=True):
         """Raise any errors which indicate that this document is wrong.
@@ -1115,7 +1115,7 @@ class TapDocumentParser(object):
                 if yaml_mode:
                     yaml_cache += line + os.linesep
                 else:
-                    line = line.lstrip('\t ').rstrip('\r\n')
+                    line = line.rstrip('\r\n')
                     if len(data) > 0 and isinstance(data[-1], basestring):
                         data[-1] += line + os.linesep
                     else:

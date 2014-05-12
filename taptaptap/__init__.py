@@ -45,9 +45,8 @@ from .impl import TapDocumentActualIterator, TapDocumentFailedIterator
 from .impl import TapDocumentTokenizer, TapDocumentParser, TapProtocol, TapWrapper
 from .impl import merge
 
-from .exc import TapParseError, TapMissingPlan, TapInvalidNumbering, TapBailout
-
 from .api import parse_string, parse_file, validate, harness, TapWriter
 from .api import TapCreator, SimpleTapCreator, UnittestResult, UnittestRunner
 
 from . import proc
+from . import exc

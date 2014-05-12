@@ -55,13 +55,6 @@ class TestExamples(unittest.TestCase):
         self.assertEquals(doc.count_todo(), 0)
         self.assertEquals(doc.count_skip(), 0)
 
-    def test004(self):
-        doc = taptaptap.parse_file(e('004'))
-        self.assertFalse(doc[1].field)
-        self.assertEquals(doc.count_not_ok(), 1)
-        self.assertEquals(doc.count_todo(), 0)
-        self.assertEquals(doc.count_skip(), 0)
-
     def test005(self):
         doc = taptaptap.parse_file(e('005'))
         self.assertTrue(doc[1].field)
@@ -148,20 +141,19 @@ class TestExamples(unittest.TestCase):
     def test017(self):
         doc = taptaptap.parse_file(e('017'))
         self.assertEquals(doc.plan(), u'1..2')
-        self.assertEquals(doc[2].data[0], u'Text1\n')
+        self.assertEquals(doc[2].data[0], u'  Text1\n')
         self.assertEquals(doc[2].data[1], {
             'message': 'First line invalid',
             'severity': 'fail',
             'data': {'got': 'Flirble', 'expect': 'Fnible'}
         })
-        self.assertEquals(doc[2].data[2], 'not ok Text2\n')
+        self.assertEquals(doc[2].data[2], '  not ok Text2\n')
         self.assertEquals(doc[2].data[3], {'key': 'value'})
         self.assertTrue(doc.valid())
 
     def test018(self):
         doc = taptaptap.parse_file(e('018'))
-        self.assertRaises(taptaptap.TapInvalidNumbering, \
-            lambda: doc.valid())
+        self.assertRaises(taptaptap.exc.TapInvalidNumbering, lambda: doc.valid())
 
     def test019(self):
         doc = taptaptap.parse_file(e('019'))
@@ -190,7 +182,7 @@ class TestExamples(unittest.TestCase):
             for tc in doc:
                 pass
 
-        self.assertRaises(taptaptap.TapBailout, iterate)
+        self.assertRaises(taptaptap.exc.TapBailout, iterate)
 
     def test022(self):
         doc = taptaptap.parse_file(e('022'))

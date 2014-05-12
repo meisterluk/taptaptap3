@@ -8,8 +8,8 @@ import codecs
 import subprocess
 import taptaptap
 
+success = lambda x: print('  [ OK ]  ' + x)
 
-success  = lambda x: print('  [ OK ]  ' + x)
 
 def call_module(filepath):
     """Call TAP file with module loading and return the metrics tuple"""
@@ -59,7 +59,6 @@ def run_python_file(filepath):
         # check conditions
         output = out or err
         doc = taptaptap.parse_string(output)
-        print(output)
 
         total = len(doc)
         bailout, ok = doc.bailed(), doc.count_ok()
@@ -95,8 +94,7 @@ def run_tap_file(filepath):
     else:
         valid = -1
 
-    return (valid, doc.count_ok(), len(doc),
-        doc.bailed(), u'', err)
+    return (valid, doc.count_ok(), len(doc), doc.bailed(), u'', err)
 
 
 validity = re.compile(u'##     validity: (-?\d+)', flags=re.I)
@@ -104,6 +102,7 @@ tests    = re.compile(u'## ok testcases: (\d+) / (\d+)', flags=re.I)
 rbailout = re.compile(u'##      bailout: (no|yes)', flags=re.I)
 inout    = re.compile(u'##       stdout: (~?)(\S*)', flags=re.I)
 inerr    = re.compile(u'##       stderr: (~?)(\S*)', flags=re.I)
+
 
 def check_line(line, valid, ok, total, bailout, stdout, stderr):
     matches = [validity, tests, rbailout, inout, inerr]

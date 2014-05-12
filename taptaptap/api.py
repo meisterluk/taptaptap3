@@ -327,6 +327,7 @@ class UnittestResult(unittest.result.TestResult):
             self.doc.write("-" * 35)
 
     def write(self, stream=sys.stderr):
+        self.doc.finalize()
         print(self.doc, file=stream)
 
 
@@ -351,7 +352,7 @@ class UnittestRunner(object):
             stopTestRun = getattr(result, 'stopTestRun', None)
             if stopTestRun is not None:
                 stopTestRun()
-        
+
         if nr_testcases > 0:
             result.addTime(time.time() - start)
 

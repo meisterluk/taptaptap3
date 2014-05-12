@@ -17,10 +17,8 @@ Test Anything Protocol handling for cats \*rawwr*
 Compatibility
 -------------
 
-``taptaptap`` has been tested with
-* python 2.7 on Linux 3.8 x86_64
-
-A version for python 3.x is (not yet?) available.
+``taptaptap`` is only supposed to be working with python 2.7 (due to with statements and argparse).
+It has been tested with Linux 3.8 x86_64. A version for python 3.x is (not yet?) available. It fully supports unicode.
 
 The File Format
 ---------------
@@ -40,25 +38,24 @@ You can run the ``taptaptap`` testcases yourself using::
 
     ./run.sh
 
-in the tests directory. The testsuite also shows some API usage examples, but I want to provide some here. The procedural API is pretty if you are in the python REPL::
+in the tests directory. The testsuite also shows some API usage examples, but I want to provide some here. The procedural API is well-suited if you are in the python REPL::
 
-    from taptaptap.proc import plan, ok, not_ok, write
+    from taptaptap.proc import plan, ok, not_ok, out
     plan(tests=10)
     ok('Starting the robot')
     not_ok('Starting the engine')
     not_ok('Find the object', skip='Setup required')
     not_ok('Terminate', skip='Setup required')
 
-    write()
+    out()
 
 The output looks like this::
 
-    TAP version 13
     1..10
-    ok 1 - Starting the robot
-    not ok 2 - Starting the engine
-    not ok 3 - Find the object  # SKIP Setup required
-    not ok 4 - Terminate  # SKIP Setup required
+    ok - Starting the robot
+    not ok - Starting the engine
+    not ok - Find the object  # SKIP Setup required
+    not ok - Terminate  # SKIP Setup required
 
 Be aware that the state is stored within the module. This is not what you want if you are outside the REPL. The ``TapWriter`` class is more convenient in this case::
 
@@ -70,7 +67,7 @@ Be aware that the state is stored within the module. This is not what you want i
     writer.ok('And another one')
     writer.ok('And also the last one')
 
-If you like python's generators, you want to use ``SimpleTapCreator``:
+If you like python's generators, you want to use ``SimpleTapCreator``::
 
     @taptaptap.SimpleTapCreator
     def runTests():
