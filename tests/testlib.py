@@ -17,7 +17,8 @@ def call_module(filepath):
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
 
-    out, err = [v.decode(sys.stdout.encoding) for v in proc.communicate()]
+    encoding = sys.stdout.encoding or 'utf-8'
+    out, err = [v.decode(encoding) for v in proc.communicate()]
     valid = proc.returncode
     doc = taptaptap.parse_string(out)
     ok, total, bailout = doc.count_ok(), len(doc), doc.bailed()
