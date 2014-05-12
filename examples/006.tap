@@ -11,6 +11,6 @@ more tests....
 ##     validity: -1
 ## ok testcases: 3 / 48
 ##      bailout: no
-##       stdout: 1..48
-##       stdout: Diagnostic
-##       stdout: more tests...
+##       stderr: 1..48
+##       stderr: Diagnostic
+##       stderr: more tests...

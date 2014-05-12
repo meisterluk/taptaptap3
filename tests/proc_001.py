@@ -2,7 +2,7 @@
 
 from taptaptap.proc import plan, ok, not_ok, out
 
-plan(tests=1)
+plan(tests=2)
 ok('Proving it right')
 not_ok('and failing')
 

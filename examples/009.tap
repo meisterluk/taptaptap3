@@ -12,5 +12,5 @@ ok 5 - # SKIP no /sys directory
 ##     validity: 0
 ## ok testcases: 5 / 5
 ##      bailout: no
-##       stdout: operating
-##       stdout: $^0
+##       stderr: operating
+##       stderr: $^0

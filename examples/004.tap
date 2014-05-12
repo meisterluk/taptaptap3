@@ -7,4 +7,4 @@ not ok Not sooo good
 ##     validity: -1
 ## ok testcases: 0 / 1
 ##      bailout: no
-##       stdout: sooo
+##       stderr: sooo

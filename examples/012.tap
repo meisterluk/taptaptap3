@@ -11,7 +11,7 @@ not ok 4 - infinite loop 2 # TODO halting problem unsolved
 ##     validity: -1
 ## ok testcases: 2 / 4
 ##      bailout: no
-##       stdout: 1..4
-##       stdout: no error
-##       stdout: halting problem
-##       stdout: TODO
+##       stderr: 1..4
+##       stderr: no error
+##       stderr: halting problem
+##       stderr: TODO

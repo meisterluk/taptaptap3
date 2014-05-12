@@ -85,11 +85,11 @@ ok 20 nested tap # todo nice to have
 ##     validity: 0
 ## ok testcases: 22 / 6
 ##      bailout: no
-##       stdout: version 13
-##       stdout: 01 affe
-##       stdout: 6 # SKIP plan
-##       stdout: going with
-##       stdout:    not ok
-##       stdout: $expected
-##       stdout: nested tap
-##       stdout: nice to have
+##       stderr: version 13
+##       stderr: 01 affe
+##       stderr: 6 # SKIP plan
+##       stderr: going with
+##       stderr:    not ok
+##       stderr: $expected
+##       stderr: nested tap
+##       stderr: nice to have

@@ -17,4 +17,4 @@ ok 2 - I don't give a fuck... still working ^^
 ##       stderr: Filesystem
 ##       stderr: Segfault
 ##       stderr: Missing file in RAM
-##       stdout: a fuck
+##       stderr: a fuck

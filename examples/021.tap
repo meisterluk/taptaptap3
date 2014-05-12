@@ -9,5 +9,5 @@ Bail out! Couldn't connect to database.
 ##     validity: -2
 ## ok testcases: 0 / 573
 ##      bailout: yes
-##       stdout: database handle
+##       stderr: database handle
 ##       stderr: connect to

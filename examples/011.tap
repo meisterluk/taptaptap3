@@ -12,5 +12,5 @@ not ok
 ##     validity: 0
 ## ok testcases: 5 / 0
 ##      bailout: no
-##       stdout: SKIP
-##       stdout: because
+##       stderr: SKIP
+##       stderr: because

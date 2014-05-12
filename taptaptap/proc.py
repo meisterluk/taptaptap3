@@ -44,6 +44,17 @@ def write(line):
 def ok(description=u'', skip=False, todo=False):
     """Add a succeeded testcase entry"""
     _create()
+
+    if skip == True:
+        skip = u' '
+    elif skip == False:
+        skip = u''
+
+    if todo == True:
+        todo = u' '
+    elif todo == False:
+        todo = u''
+
     writer.testcase(True, description, skip, todo)
 
 def not_ok(description=u'', skip=False, todo=False):
@@ -58,4 +69,4 @@ def bailout(comment=''):
 
 def out():
     _create()
-    return unicode(writer)
+    print(unicode(writer))

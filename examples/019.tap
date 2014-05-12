@@ -28,4 +28,4 @@ ok 12 - Board size is 1
 ##     validity: 0
 ## ok testcases: 12 / 12
 ##      bailout: no
-##       stdout: TAP version 13
+##       stderr: TAP version 13

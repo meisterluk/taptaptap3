@@ -2,6 +2,8 @@
 
 """Merge two TAP files"""
 
+from __future__ import print_function
+
 import sys
 import taptaptap
 import argparse
@@ -17,7 +19,7 @@ def main(args):
         with open(args.outfile, 'w') as fp:
             fp.write(doc3)
     else:
-        print(doc3)
+        print(doc3, file=sys.stderr)
 
 if __name__ == '__main__':
     # command line parameter parsing

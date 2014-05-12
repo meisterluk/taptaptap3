@@ -9,6 +9,6 @@ not ok 4 - Summarized correctly # TODO Not written yet
 ##     validity: -1
 ## ok testcases: 2 / 4
 ##      bailout: no
-##       stdout: Read the rest
-##       stdout: TODO
-##       stdout: Not written
+##       stderr: Read the rest
+##       stderr: TODO
+##       stderr: Not written

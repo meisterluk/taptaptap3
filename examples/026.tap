@@ -58,5 +58,5 @@ ok 57 - 💩
 ##      bailout: yes
 ##       stderr: Filesystem
 ##       stderr: ~Failsystem
-##       stdout: value
-##       stdout: 'First line invalid'
+##       stderr: value
+##       stderr: 'First line invalid'

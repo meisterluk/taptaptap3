@@ -14,7 +14,7 @@ more tests....
 ##     validity: 1
 ## ok testcases: 5 / 4
 ##      bailout: no
-##       stdout: more tests
-##       stdout: Summarized
-##       stdout: Not written
-##       stdout: ...
+##       stderr: more tests
+##       stderr: Summarized
+##       stderr: Not written
+##       stderr: ...

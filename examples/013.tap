@@ -28,5 +28,5 @@ ok - board has 7 tiles + starter tile
 ##     validity: 0
 ## ok testcases: 9 / 9
 ##      bailout: no
-##       stdout: G A G
-##       stdout: #
+##       stderr: G A G
+##       stderr: #

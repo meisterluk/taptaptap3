@@ -10,4 +10,4 @@ ok 3 This is fine
 ##     validity: 0
 ## ok testcases: 4 / 4
 ##      bailout: no
-##       stdout: fine
+##       stderr: fine

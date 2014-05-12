@@ -19,6 +19,6 @@ ok 6 - Board size is 1
 ##     validity: 0
 ## ok testcases: 6 / 6
 ##      bailout: no
-##       stdout: Board size
-##       stdout: 1..6
-##       stdout: Tile
+##       stderr: Board size
+##       stderr: 1..6
+##       stderr: Tile

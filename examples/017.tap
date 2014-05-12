@@ -23,6 +23,6 @@ ok 2 - 2 texts and 2 data dumps
 ##     validity: 0
 ## ok testcases: 2 / 2
 ##      bailout: no
-##       stdout: Text1
-##       stdout: Text2
-##       stdout: ---
+##       stderr: Text1
+##       stderr: Text2
+##       stderr: ---

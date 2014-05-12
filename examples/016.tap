@@ -21,6 +21,6 @@ not ok 4 - Summarized correctly # TODO Not written yet
 ##     validity: -1
 ## ok testcases: 2 / 4
 ##      bailout: no
-##       stdout: 'First
-##       stdout: data
-##       stdout: Not written
+##       stderr: 'First
+##       stderr: data
+##       stderr: Not written
