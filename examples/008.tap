@@ -1,5 +1,18 @@
-1..4
-ok 1 - Creating test program
-ok 2 - Test program runs, no error
-not ok 3 - infinite loop # TODO halting problem unsolved
-not ok 4 - infinite loop 2 # TODO halting problem unsolved
+ok 1 - retrieving servers from the database
+# need to ping 6 servers
+ok 2 - pinged diamond
+ok 3 - pinged ruby
+not ok 4 - pinged saphire
+ok 5 - pinged onyx
+not ok 6 - pinged quartz
+ok 7 - pinged gold
+1..7
+
+
+
+
+##     validity: -1
+## ok testcases: 5 / 7
+##      bailout: no
+##       stdout: need to ping
+##       stdout: ruby

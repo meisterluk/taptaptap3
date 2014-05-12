@@ -3,12 +3,18 @@ ok 1 - Input file opened
 not ok 2 - First line of the input valid
 ok 3 - Read the rest of the file
 not ok 4 - Summarized correctly # TODO Not written yet
+ok 1 Description # Directive
+ok 47 Description
+ok 48 Description
+more tests....
 
 
 
-##     validity: -1
-## ok testcases: 2 / 4
+
+##     validity: 1
+## ok testcases: 5 / 4
 ##      bailout: no
-##       stdout: Read the rest
-##       stdout: TODO
+##       stdout: more tests
+##       stdout: Summarized
 ##       stdout: Not written
+##       stdout: ...

@@ -1,10 +1,8 @@
-ok This one's fine
 1..1
-
-
+ok 💩
 
 
 ##     validity: 0
 ## ok testcases: 1 / 1
 ##      bailout: no
-##       stdout: one's
+##       stdout: 💩

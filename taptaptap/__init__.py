@@ -39,15 +39,15 @@ __version__ = '1.0.0'
 __license__ = '3-clause BSD license'
 __docformat__ = 'reStructuredText'
 
-from .impl import YamlData, TapTestcase, TapActualNumbering, TapNumbering
-from .impl import TapDocument, TapDocumentIterator, TapDocumentActualIterator
-from .impl import TapDocumentFailedIterator, TapDocumentTokenizer
-from .impl import TapDocumentValidator, TapDocumentParser, TapContext, validate
-from .impl import repr_harness, tapmerge, parse_file, parse_string
+from .impl import YamlData, TapTestcase, TapNumbering, TapActualNumbering
+from .impl import TapDocument, TapDocumentValidator, TapDocumentIterator
+from .impl import TapDocumentActualIterator, TapDocumentFailedIterator
+from .impl import TapDocumentTokenizer, TapDocumentParser, TapProtocol, TapWrapper
+from .impl import merge
 
 from .exc import TapParseError, TapMissingPlan, TapInvalidNumbering, TapBailout
 
-from .api import doc_from_string, doc_from_file, TapWriter, TapCreator
-from .api import SimpleTapCreator, UnittestResult, UnittestRunner
+from .api import parse_string, parse_file, validate, harness, TapWriter
+from .api import TapCreator, SimpleTapCreator, UnittestResult, UnittestRunner
 
 from . import proc

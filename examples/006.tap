@@ -1,7 +1,16 @@
-1..5
-ok 1 - approved operating system
-# $^0 is solaris
-ok 2 - # SKIP no /sys directory
-ok 3 - # SKIP no /sys directory
-ok 4 - # SKIP no /sys directory
-ok 5 - # SKIP no /sys directory
+1..48
+ok 1 Description # Directive
+# Diagnostic
+....
+ok 47 Description
+ok 48 Description
+more tests....
+
+
+
+##     validity: -1
+## ok testcases: 3 / 48
+##      bailout: no
+##       stdout: 1..48
+##       stdout: Diagnostic
+##       stdout: more tests...

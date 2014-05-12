@@ -5,6 +5,13 @@ import unittest
 
 from taptaptap.api import UnittestRunner
 
+##     validity: 0
+## ok testcases: 3 / 3
+##      bailout: no
+##       stdout: 1..3
+##       stdout: test_shuffle
+##       stdout: Running time
+
 
 class TestSequenceFunctions(unittest.TestCase):
     """Example by `python unittest module`_

@@ -1,5 +1,4 @@
 TAP version 13
-1..12
 #
 # Create a new Board and Tile, then place
 # the Tile onto the board.
@@ -10,13 +9,16 @@ ok 3 - The object isa Tile
 ok 4 - Get possible places to put the Tile
 ok 5 - Placing the tile produces no error
 ok 6 - Board size is 1
-#
-# Create a new Board and Tile, then place
-# the Tile onto the board.
-#
-ok 7 - The object isa Board
-ok 8 - Board size is zero
-ok 9 - The object isa Tile
-ok 10 - Get possible places to put the Tile
-ok 11 - Placing the tile produces no error
-ok 12 - Board size is 1
+1..6
+
+
+
+
+
+
+##     validity: 0
+## ok testcases: 6 / 6
+##      bailout: no
+##       stdout: Board size
+##       stdout: 1..6
+##       stdout: Tile

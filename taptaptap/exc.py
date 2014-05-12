@@ -40,30 +40,16 @@ class TapBailout(Exception):
 
     def __init__(self, *args, **kwargs):
         super(TapBailout, self).__init__(*args, **kwargs)
-        self._data = []
+        self.data = []
 
     def __str__(self):
         return unicode(self).encode(STR_ENC)
 
     def __unicode__(self):
-        return u'Bail out! {}{}'.format(os.linesep.join(self.data), os.linesep)
-
-    @property
-    def data(self):
-        return [self.message.strip()] + self._data
-
-    @data.setter
-    def data(self, value):
-        if value:
-            self.message = value[0]
-            self._data = value[1:]
-
-    @data.deleter
-    def data(self):
-        self.message = u''
-        self._data = []
+        return u'Bail out! {}{}{}'.format(self.message, os.linesep, \
+                                          os.linesep.join(self.data))
 
     def copy(self, memo=None):
         inst = TapBailout(self.message)
-        inst.data = self._data
+        inst.data = self.data
         return inst

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from taptaptap import YamlData, TapContext
+from taptaptap import YamlData, TapWrapper
 from taptaptap import TapDocument, TapNumbering, TapTestcase
 from taptaptap import TapDocumentIterator, TapDocumentActualIterator
 from taptaptap import TapDocumentFailedIterator
@@ -11,6 +11,7 @@ import unittest
 
 def parse(source, strict=False):
     TapDocumentReader().from_string(source, lenient=not strict)
+
 
 class TestTapDocument(unittest.TestCase):
     def testEmptyDocument(self):
@@ -143,6 +144,51 @@ class TestTapDocument(unittest.TestCase):
         self.assertFalse(5 in doc)
         self.assertFalse(6 in doc)
 
+    def testIndexing(self):
+        doc = TapDocument()
+        doc.add_plan(1, 10)
+
+        tc1 = TapTestcase()
+        tc1.number = 1
+        tc1.field = True
+        tc1.description = "First testcase"
+
+        tc2 = TapTestcase()
+        tc2.field = True
+        tc2.description = "Second testcase"
+
+        tc3 = TapTestcase()
+        tc3.number = 4
+        tc3.field = False
+        tc3.description = "Fourth testcase"
+
+        tc4 = TapTestcase()
+        tc4.field = True
+        tc4.description = "Third testcase"
+
+        tc5 = TapTestcase()
+        tc5.field = True
+        tc5.description = "Fifth testcase"
+
+        doc.add_testcase(tc1)
+        doc.add_testcase(tc2)
+        doc.add_testcase(tc3)
+        doc.add_testcase(tc4)
+        doc.add_bailout(TapBailout('raising bailout'))
+        doc.add_testcase(tc5)
+
+        self.assertEquals(doc[1], tc1)
+        self.assertEquals(doc[2], tc2)
+        self.assertEquals(doc[3], tc4)
+        self.assertEquals(doc[4], tc3)
+        self.assertEquals(doc[5], tc5)
+        self.assertEquals(doc[6], None)
+        self.assertEquals(doc[10], None)
+
+        self.assertRaises(IndexError, lambda: doc[0])
+        self.assertRaises(IndexError, lambda: doc[11])
+        self.assertRaises(IndexError, lambda: doc[256])
+
     def testCount(self):
         doc = TapDocument()
 
@@ -166,7 +212,7 @@ class TestTapDocument(unittest.TestCase):
         tc4.field = True
         doc.add_testcase(tc4)
 
-        self.assertEquals(doc.count_failed(), 2)
+        self.assertEquals(doc.count_not_ok(), 2)
         self.assertEquals(doc.count_todo(), 3)
         self.assertEquals(doc.count_skip(), 1)
 
@@ -251,6 +297,7 @@ class TestTapDocument(unittest.TestCase):
 
         doc.add_bailout(TapBailout('System crashed'))
         self.assertFalse(doc.valid())
+
 
 class TestTapDocumentIterator(unittest.TestCase):
     def testIterWithoutBailout(self):
@@ -371,12 +418,13 @@ class TestTapDocumentFailedIterator(unittest.TestCase):
 class TestTapParsing(unittest.TestCase):
     pass
 
-class TestTapContext(unittest.TestCase):
-    def testContext(self):
+class TestTapContextManager(unittest.TestCase):
+    def testWrapper(self):
         with TapDocument() as tap:
             tap.plan(1, 4)
             tap.ok("a fine testcase").not_ok("a failed testcase")
-            doc = tap.get()
+            doc = tap.unwrap()
+
         self.assertEquals(doc.plan(), '1..4')
         self.assertIn(u'fine testcase', unicode(doc))
         self.assertIn(u'failed testcase', unicode(doc))

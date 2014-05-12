@@ -1,0 +1,14 @@
+1..4
+ok
+ok
+Bail out! Stopped iteration
+not ok
+not ok
+
+
+
+
+##     validity: -2
+## ok testcases: 2 / 4
+##      bailout: yes
+##       stderr: Stopped

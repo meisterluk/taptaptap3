@@ -25,7 +25,7 @@ class TestExceptions(unittest.TestCase):
         no_plan            = 'not ok\n'
         no_integer_version = 'TAP version 13h\n1..1\nok\n'
         invalid_plan       = '1..1b\nok\n'
-        negative_plan      = '1..0\n '
+        negative_plan      = '3..0\n '
 
         # two_tcs1
         two_tcs1_doc = parse(two_tcs1, False)
@@ -62,11 +62,11 @@ class TestExceptions(unittest.TestCase):
             dump_file.seek(0)
             return pickle.load(dump_file)
 
-        bailout = TapBailout('')
-        bailout.data = ['Hello World', 'Hi', 'ho']
+        bailout = TapBailout('Hello World')
+        bailout.data = ['Hi', 'ho']
         bailout = trypickle(bailout)
         self.assertEquals(bailout.message, 'Hello World')
-        self.assertEquals(';'.join(bailout.data), 'Hello World;Hi;ho')
+        self.assertEquals(';'.join(bailout.data), 'Hi;ho')
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,82 +5,57 @@
     proc.py
     ~~~~~~~
 
-    Procedural API for TAP file generation.
+    Procedural API for TAP file generation (ie. TapWriter on module-level).
     Call plan, comment, ok, not_ok and write in the sequence order::
 
-        (plan (ok | not_ok | comment)+ bailout? write)*
+        plan? (write | ok | not_ok)+ bailout? out
 
     Other control flows might work, but are not officially supported.
-    All functions except `write` return the document;
-    thus allows method chaining.
 
     (c) BSD 3-clause.
 """
 
-from .impl import TapDocument, TapContext
+from .impl import TapDocument, TapDocumentValidator
+from .api import TapWriter
 
 
-# global state
+writer = None
+counter = 0  # counter for tcs, if no plan provided
+planned = False  # was a plan written yet?
 
-doc = TapDocument()
-context = TapContext(doc)
-plan_written = False
+def _create():
+    global writer
+    if writer is None:
+        writer = TapWriter()
 
-def doc():
-    """API to retrieve the document we are working with.
-    Can be used to apply methods not provided by the procedural API
-    or test the state of the document.
+def plan(first=None, last=None, skip=u'', tests=None,
+         tapversion=TapDocument.DEFAULT_VERSION):
+    """Define a plan. Provide integers `first` and `last` XOR `tests`.
+    `skip` is a non-empty message if the whole testsuite was skipped.
     """
-    return doc
+    _create()
+    writer.plan(first, last, skip, tests, tapversion)
 
-def plan(start=None, end=None, tests=None):
-    """Define how many tests you want to run.
-    Either provide `start` & `end` or `tests` attributes as integers.
-    """
-    global plan_written, doc, context
+def write(line):
+    """Add a comment at the current position"""
+    _create()
+    writer.write(line)
 
-    if plan_written:
-        # dump old instance and create a new one
-        doc = TapDocument()
-        context = TapContext(doc)
-        plan_written = False
+def ok(description=u'', skip=False, todo=False):
+    """Add a succeeded testcase entry"""
+    _create()
+    writer.testcase(True, description, skip, todo)
 
-    with context as tap_doc:
-        plan(start, end, tests)
+def not_ok(description=u'', skip=False, todo=False):
+    """Add a failed testcase entry"""
+    _create()
+    writer.testcase(False, description, skip, todo)
 
-    plan_written = True
+def bailout(comment=''):
+    """Add Bailout to document"""
+    _create()
+    writer.bailout(comment)
 
-def comment(cmt):
-    """Add a comment at the current position."""
-    global context
-
-    with context as tap_doc:
-        tap_doc.comment(cmt)
-
-def ok(comment, data=None, skip=False, todo=False):
-    """Add information about a succeeded testcase"""
-    global context
-
-    with context as tap_doc:
-        tap_doc.ok(comment, data, skip, todo)
-
-def not_ok(comment, data=None, skip=False, todo=False):
-    """Add information about a failed testcase. Always returns True"""
-    global context
-
-    with context as tap_doc:
-        tap_doc.not_ok(comment, data, skip, todo)
-
-def bailout(comment=u''):
-    """Trigger a bailout"""
-    global context
-
-    with context as tap_doc:
-        tap_doc.bailout(comment)
-
-def write():
-    """Write the document to stdout"""
-    global context
-
-    with context as tap_doc:
-        return tap_doc.write()
+def out():
+    _create()
+    return unicode(writer)

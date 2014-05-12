@@ -6,11 +6,12 @@ import sys
 import taptaptap
 import argparse
 
+
 def main(args):
     doc1 = taptaptap.parse_file(args.file1)
     doc2 = taptaptap.parse_file(args.file2)
 
-    doc3 = doc1.merge(doc2)
+    doc3 = taptaptap.merge(doc1, doc2)
 
     if args.outfile:
         with open(args.outfile, 'w') as fp:

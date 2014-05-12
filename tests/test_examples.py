@@ -1,113 +1,231 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-"""Contains all testcases which are run on the commandline
-using the files in the `examples` directory
-"""
+"""Check whether files in `examples` are read correctly"""
 
 import os.path
-import subprocess
 import taptaptap
+import unittest
+
+EXAMPLES = "../examples/"
+e = lambda filename: os.path.join(EXAMPLES, filename + u'.tap')
 
 
-EXAMPLES = "taptaptap/examples/"
+class TestExamples(unittest.TestCase):
+    def test000(self):
+        doc = taptaptap.parse_file(e('000'))
+        self.assertTrue(doc[1].field)
+        self.assertEquals(doc[1].description, u'This is fine')
+        self.assertEquals(len(doc), 1)
+        self.assertTrue(doc.valid())
 
-# testsuite
+    def test001(self):
+        doc = taptaptap.parse_file(e('001'))
+        self.assertTrue(doc[1].field)
+        self.assertEquals(doc[1].description, u"This one's fine")
+        self.assertEquals(doc.range(), (1, 1))
+        self.assertEquals(doc.plan(), u'1..1')
+        self.assertFalse(doc.bailed())
 
-def callTaptaptap(example_file, tests):
-    cmd = ['python', '-R', '-t', '-t', '-m', 'taptaptap.__main__', example_file]
-    print('Running:  {}'.format(' '.join(cmd)))
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, cwd='../..')
-    out, err = proc.communicate()
-    #print(out)
-    #print(out, err, proc.returncode)
+    def test002(self):
+        doc = taptaptap.parse_file(e('002'))
+        self.assertEquals(doc.version, 13)
+        self.assertTrue(doc[1].field)
+        self.assertEquals(doc[1].description, u"This is fine")
+        self.assertFalse(doc[1].todo)
+        self.assertEquals(doc.range(), (1, 1))
+        self.assertEquals(doc.plan(), u'1..1')
+        self.assertFalse(doc.bailed())
 
-    for testcode in tests:
-        verify(testcode, out, err, proc.returncode)
+    def test003(self):
+        doc = taptaptap.parse_file(e('003'))
+        self.assertFalse(doc.skip)
+        self.assertEquals(doc.plan(), u'1..4')
+        self.assertEquals(doc.range(), (1, 4))
+        self.assertEquals(doc.actual_plan(), u'1..4')
+        self.assertEquals(doc.actual_range(), (1, 4))
+        self.assertEquals(len(doc), 4)
+        self.assertEquals(doc.actual_length(), 4)
+        self.assertEquals(doc[1].number, 1)
 
-def runProgram(cmd, tests):
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
+    def test004(self):
+        doc = taptaptap.parse_file(e('004'))
+        self.assertFalse(doc[1].field)
+        self.assertEquals(doc.count_not_ok(), 1)
+        self.assertEquals(doc.count_todo(), 0)
+        self.assertEquals(doc.count_skip(), 0)
 
-    for testcode in tests:
-        verify(testcode, out, err, proc.returncode)
+    def test004(self):
+        doc = taptaptap.parse_file(e('004'))
+        self.assertFalse(doc[1].field)
+        self.assertEquals(doc.count_not_ok(), 1)
+        self.assertEquals(doc.count_todo(), 0)
+        self.assertEquals(doc.count_skip(), 0)
 
-def verify(code, out, err, retcode):
-    local = {'out': out, 'err': err, 'retcode': retcode}
-    try:
-        exec 'assert {}'.format(code) in {}, local
-    except AssertionError:
-        raise AssertionError("Failed: " + code)
+    def test005(self):
+        doc = taptaptap.parse_file(e('005'))
+        self.assertTrue(doc[1].field)
+        self.assertFalse(doc[2].field)
+        self.assertFalse(doc[3].todo)
+        self.assertTrue(doc[4].todo)
 
-# testcase specification
+    def test006(self):
+        doc = taptaptap.parse_file(e('006'))
+        self.assertEquals(len(doc), 48)
+        self.assertEquals(doc.actual_length(), 3)
+        self.assertEquals(doc.range(), (1, 48))
+        self.assertEquals(doc.actual_range(), (1, 48))
+        self.assertEquals(doc[1].description, u'Description # Directive')
+        self.assertIn(u'...', doc[1].data[0])
+        self.assertEquals(doc[48].description, u'Description')
+        self.assertIn(u'more tests...', doc[48].data[0])
 
-# cli tools
-cli_validate = ['/usr/bin/python', '../bin/tapvalidate']
-cli_merge = ['python', '../tapmerger.py']
-e = lambda filename: os.path.join(EXAMPLES, filename + '.tap')
+    def test007(self):
+        doc = taptaptap.parse_file(e('007'))
+        self.assertIn(u'Create a new', unicode(doc))
 
-NO_ERROR0 = ['"Error" not in err and "Exception" not in err', 'retcode == 0']
-NO_ERROR1 = ['"Error" not in err and "Exception" not in err', 'retcode == 1']
-NO_BAILOUT = ['"Bail out!" not in out']
+    def test008(self):
+        doc = taptaptap.parse_file(e('008'))
+        self.assertFalse(doc.bailed())
+        self.assertFalse(doc.valid())
+        self.assertEquals(len(doc), 7)
 
-TESTCASES_TAPTAPTAP = {
-    e('001'):
-        ['"Read the rest" in out', '"Not written" in out', '"1..4" in out'] + \
-        NO_ERROR1 + NO_BAILOUT,
-    e('002'):
-        ['"1..48" in out', '"ok 48" in out', '"more tests" in out'] + \
-        NO_ERROR1 + NO_BAILOUT,
-    e('003'):
-        ['"The object isa Board" in out', '"Board size is 1" in out'] + \
-        NO_ERROR0 + NO_BAILOUT,
-    e('004'):
-        ['"need to ping 6 servers" in out', '"1..7" in out'] + \
-        NO_ERROR1 + NO_BAILOUT,
-    e('005'):
-        ['"database handle" in out', 'retcode == 2', \
-        '"Bail out! Couldn\'t" in out',
-        '"Error" not in err and "Exception" not in err'],
-    e('006'):
-        ['"SKIP no /sys directory" in out'] + NO_ERROR0 + NO_BAILOUT,
-    e('007'):
-        ['"English-to-French translator" in out'] + NO_ERROR0 + NO_BAILOUT,
-    e('008'): NO_ERROR1 + NO_BAILOUT,
-    e('009'): NO_ERROR0 + NO_BAILOUT,
-    e('010'): NO_ERROR0 + NO_BAILOUT,
-    e('011'):
-        ['"First line invalid" in out', '"data:" in out', '"ok 3" in out'] + \
-        NO_ERROR1 + NO_BAILOUT
-}
+    def test009(self):
+        doc = taptaptap.parse_file(e('009'))
+        self.assertFalse(doc.bailed())
+        self.assertTrue(doc.valid())
+        self.assertEquals(doc.plan(), u'1..5')
+        self.assertEquals(doc.actual_range(), (1, 5))
 
-TESTCASES_CLI = [
-    (cli_validate + [e('001')], ['retcode == 1', 'not out', 'not err']),
-    (cli_validate + [e('002')], ['retcode == 1', 'not out', 'not err']),
-    (cli_validate + [e('003')], ['retcode == 0', 'not out', 'not err']),
-    (cli_validate + [e('004')], ['retcode == 1', 'not out', 'not err']),
-    (cli_validate + [e('005')], ['retcode == 1', 'not out', 'not err']),
-    (cli_validate + [e('006')], ['retcode == 0', 'not out', 'not err']),
-    (cli_validate + [e('007')], ['retcode == 0', 'not out', 'not err']),
-    (cli_validate + [e('008')], ['retcode == 0', 'not out', 'not err']),
-    (cli_validate + [e('009')], ['retcode == 0', 'not out', 'not err']),
-    (cli_validate + [e('010')], ['retcode == 0', 'not out', 'not err']),
-    (cli_validate + [e('011')], ['retcode == 0', 'not out', 'not err']),
-    (cli_merge + [e('001'), e('004')], ['"Input file opened" in out',
-        '"First line of the input" in out', '"1..11" in out',
-        'out.count("not ok") == 4']),
-    (cli_merge + [e('001'), e('005')], ['"Not written" in out',
-        '"1..577" in out', 'out.count("not ok") == 3', '"Bail out!" in out']),
-    (cli_merge + [e('005'), e('001')], ['"Not written" not in out',
-        '"1..577" in out', '"Bail out!" in out'])
-]
+    def test010(self):
+        doc = taptaptap.parse_file(e('010'))
+        self.assertFalse(doc.bailed())
+        self.assertTrue(doc.valid())
+        self.assertTrue(doc.skip)
+        self.assertEquals(len(doc), 0)
+
+    def test011(self):
+        doc = taptaptap.parse_file(e('011'))
+        self.assertFalse(doc.bailed())
+        self.assertTrue(doc.valid())
+        self.assertTrue(doc.skip)
+        self.assertEquals(len(doc), 0)
+        self.assertEquals(doc.actual_length(), 6)
+        self.assertEquals(doc.count_not_ok(), 1)
+        self.assertEquals(doc.count_todo(), 0)
+
+    def test012(self):
+        doc = taptaptap.parse_file(e('012'))
+        self.assertTrue(doc[3].todo)
+
+    def test013(self):
+        doc = taptaptap.parse_file(e('013'))
+        self.assertTrue(len(doc), 9)
+        self.assertTrue(doc.valid())
+
+    def test014(self):
+        doc = taptaptap.parse_file(e('014'))
+        self.assertTrue(len(doc), 6)
+        self.assertTrue(doc.valid())
+        self.assertEquals(doc[6].description, u'Board size is 1')
+
+    def test015(self):
+        doc = taptaptap.parse_file(e('015'))
+        self.assertEquals(doc.version, 13)
+        self.assertEquals(doc.plan(), u'1..6')
+
+    def test016(self):
+        doc = taptaptap.parse_file(e('016'))
+        self.assertFalse(doc[2].field)
+        self.assertEquals(doc[2].data[0],
+            {'message': 'First line invalid', 'severity': 'fail', 'data':
+                {'got': 'Flirble', 'expect': 'Fnible'}})
+        self.assertFalse(doc[4].field)
+        self.assertTrue(doc[4].todo)
+        self.assertEquals(doc[4].data[0],
+            {'message': "Can't make summary yet", 'severity': 'todo'})
+
+    def test017(self):
+        doc = taptaptap.parse_file(e('017'))
+        self.assertEquals(doc.plan(), u'1..2')
+        self.assertEquals(doc[2].data[0], u'Text1\n')
+        self.assertEquals(doc[2].data[1], {
+            'message': 'First line invalid',
+            'severity': 'fail',
+            'data': {'got': 'Flirble', 'expect': 'Fnible'}
+        })
+        self.assertEquals(doc[2].data[2], 'not ok Text2\n')
+        self.assertEquals(doc[2].data[3], {'key': 'value'})
+        self.assertTrue(doc.valid())
+
+    def test018(self):
+        doc = taptaptap.parse_file(e('018'))
+        self.assertRaises(taptaptap.TapInvalidNumbering, \
+            lambda: doc.valid())
+
+    def test019(self):
+        doc = taptaptap.parse_file(e('019'))
+        self.assertEquals(doc.version, 13)
+        self.assertTrue(doc[7].field)
+        self.assertEquals(doc[7].description, u"The object isa Board")
+        self.assertFalse(doc[2].todo)
+        self.assertEquals(doc.range(), (1, 12))
+        self.assertEquals(doc.plan(), u'1..12')
+        self.assertFalse(doc.bailed())
+        self.assertTrue(doc.valid())
+
+    def test020(self):
+        doc = taptaptap.parse_file(e('020'))
+        self.assertEquals(len(doc), 0)
+
+    def test021(self):
+        doc = taptaptap.parse_file(e('021'))
+        self.assertEquals(len(doc), 573)
+        self.assertEquals(doc.actual_length(), 1)
+        self.assertTrue(doc.bailed())
+        self.assertFalse(doc[1].field)
+        self.assertIn(u"Couldn't connect to database.", doc.bailout_message())
+
+        def iterate():
+            for tc in doc:
+                pass
+
+        self.assertRaises(taptaptap.TapBailout, iterate)
+
+    def test022(self):
+        doc = taptaptap.parse_file(e('022'))
+        self.assertEquals(len(doc), 2)
+        self.assertEquals(doc.actual_length(), 2)
+        self.assertTrue(doc.bailed())
+        self.assertFalse(doc.valid())
+        # require first bailout message
+        self.assertEquals(doc.bailout_message(), u"Couldn't connect to database.")
+
+    def test023(self):
+        doc = taptaptap.parse_file(e('023'))
+        self.assertTrue(doc.valid())
+
+    def test024(self):
+        # The ultimate Pile of Poo test
+        # http://intertwingly.net/blog/2013/10/22/The-Pile-of-Poo-Test
+        doc = taptaptap.parse_file(e('024'))
+        self.assertTrue(doc[1].description, u'💩')
+        self.assertTrue(doc.valid())
+
+    def test025(self):
+        doc = taptaptap.parse_file(e('025'))
+        self.assertTrue(doc[1].field)
+        self.assertTrue(doc[2].field)
+        self.assertFalse(doc[3].field)
+        self.assertFalse(doc[4].field)
+        self.assertTrue(doc.bailed())
+        self.assertFalse(doc.valid())
+        self.assertEquals(doc.bailout_message(), u'Stopped iteration')
+
+    def test026(self):
+        doc = taptaptap.parse_file(e('026'))
+        self.assertFalse(doc.valid())
 
 
 if __name__ == '__main__':
-    for (filepath, tests) in TESTCASES_TAPTAPTAP.iteritems():
-        print 'Running TAPTAPTAP testcase {}'.format(filepath)
-        callTaptaptap(filepath, tests)
-        print '      [passed successfully]'
-
-    for (cmd, tests) in TESTCASES_CLI:
-        print 'Running CLI testcase {}'.format(' '.join(cmd))
-        runProgram(cmd, tests)
-        print '      [passed successfully]'
+    unittest.main()

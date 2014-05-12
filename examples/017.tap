@@ -1,0 +1,28 @@
+1..2
+ok 1 - Multidata test
+ok 2 - 2 texts and 2 data dumps
+  Text1
+  ---
+  message: 'First line invalid'
+  severity: fail
+  data:
+    got: 'Flirble'
+    expect: 'Fnible'
+  ...
+  not ok Text2
+  ---
+  key: value
+  ...
+
+
+
+
+
+
+
+##     validity: 0
+## ok testcases: 2 / 2
+##      bailout: no
+##       stdout: Text1
+##       stdout: Text2
+##       stdout: ---

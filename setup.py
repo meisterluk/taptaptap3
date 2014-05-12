@@ -15,6 +15,10 @@
     (C) 2014, Lukas Prokop, BSD 3-clause
 """
 
+import os
+
+from setuptools import setup
+
 def readfile(fname):
     with open(os.path.join(os.path.dirname(__file__), fname)) as fp:
         return fp.read()
@@ -27,7 +31,7 @@ setup(
     author='Lukas Prokop',
     author_email='admin@lukas-prokop.at',
     description='Test Anything Protocol handling for cats',
-    long_description=readfile(__,
+    long_description=readfile('README.rst'),
     packages=['taptaptap'],
     platforms='any',
     classifiers=[
@@ -45,5 +49,6 @@ setup(
         'Topic :: System :: Logging',
         'Topic :: System :: Systems Administration'
     ],
+    scripts=['bin/tapmerge', 'bin/tapvalidate'],
     test_suite='tests.run'
 )

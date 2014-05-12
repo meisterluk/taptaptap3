@@ -1,0 +1,62 @@
+1..57
+ok 1 - Creating test program
+ok 2 - Test program runs, no error
+not ok 3 - infinite loop # TODO halting problem unsolved
+not ok 4 - infinite loop 2 # TODO halting problem unsolved
+
+
+
+
+
+ok 5 Description # Directive
+# Diagnostic
+....
+ok 51 Description
+ok 52 Description
+more tests....
+
+
+
+ok 53 - Multidata test
+ok 54 - 2 texts and 2 data dumps
+  Text1
+  ---
+  message: 'First line invalid'
+  severity: fail
+  data:
+    got: 'Flirble'
+    expect: 'Fnible'
+  ...
+  not ok Text2
+  ---
+  key: value
+  ...
+
+
+
+
+
+
+
+ok 55 - database handle
+Bail out! Couldn't connect to database.
+Bail out! Filesystem failed
+Bail out! Daemon ate the memory
+Bail out! Segfault occured
+Bail out! Missing file in RAM
+ok 56 - I don't give a fuck... still working ^^
+
+
+
+
+ok 57 - 💩
+
+
+## merge {012.tap, 006.tap, 017.tap, 022.tap, 024.tap}
+##     validity: -2
+## ok testcases: 10 / 57
+##      bailout: yes
+##       stderr: Filesystem
+##       stderr: ~Failsystem
+##       stdout: value
+##       stdout: 'First line invalid'
