@@ -42,7 +42,7 @@ class TapBailout(Exception):
         self.data = []
 
     def __str__(self):
-        return unicode(self).encode(self.encoding)
+        return unicode(self).encode(self.encoding or 'utf-8')
 
     def __unicode__(self):
         return u'Bail out! {}{}{}'.format(self.message, os.linesep,
