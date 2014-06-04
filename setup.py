@@ -26,7 +26,7 @@ def readfile(fname):
 
 setup(
     name='taptaptap',
-    version='1.0.2',
+    version='1.0.3',
     url='http://lukas-prokop.at/proj/taptaptap/',
     license='BSD',
     author='Lukas Prokop',
@@ -50,6 +50,7 @@ setup(
         'Topic :: System :: Logging',
         'Topic :: System :: Systems Administration'
     ],
+    install_requires=['yamlish'],
     scripts=['bin/tapmerge', 'bin/tapvalidate'],
     test_suite='tests.run'
 )
