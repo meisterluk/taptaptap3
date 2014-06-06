@@ -41,7 +41,8 @@ done
 # source TAP file generators
 python_test=('proc_000.py' 'proc_001.py' 'proc_002.py' 'proc_003.py'
              'proc_004.py' 'proc_005.py' 'proc_006.py' 'proc_007.py'
-             'proc_008.py' 'proc_009.py' 'proc_010.py' 'test_unittestrunner.py')
+             'proc_008.py' 'proc_009.py' 'proc_010.py' 'test_unittestrunner.py'
+             'creator_001.py' 'simplecreator_001.py')
 
 for test in "${python_test[@]}"
 do

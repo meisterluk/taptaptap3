@@ -31,9 +31,6 @@
     (c) BSD 3-clause
 """
 
-from __future__ import division, absolute_import
-from __future__ import print_function, unicode_literals
-
 __author__ = 'Lukas Prokop <admin@lukas-prokop.at>'
 __version__ = '1.0.0'
 __license__ = '3-clause BSD license'

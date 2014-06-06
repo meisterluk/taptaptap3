@@ -217,7 +217,7 @@ def TapCreator(func, **tap_kwargs):
         >>>            'description': 'E = mc^2', 'skip': 'Still in discussion'}
         >>>     yield {'ok': False, 'description': '2 + 2 = 5',
         >>>            'todo': 'Fix surveillance state'}
-        >>>     raise TapBailout("System failure!")
+        >>>     raise taptaptap.exc.TapBailout("System failure!")
         >>>
         >>> print runTests()
         1..3

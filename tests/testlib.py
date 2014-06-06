@@ -70,7 +70,7 @@ def run_python_file(filepath):
         else:
             valid = -1
 
-        for line in output.splitlines():
+        for line in source.splitlines():
             check_line(line, valid, ok, total, bailout, out, err)
 
         success('Checked conditions in file')
