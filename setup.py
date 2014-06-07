@@ -26,7 +26,7 @@ def readfile(fname):
 
 setup(
     name='taptaptap',
-    version='1.0.3',
+    version='1.0.4',
     url='http://lukas-prokop.at/proj/taptaptap/',
     license='BSD',
     author='Lukas Prokop',
