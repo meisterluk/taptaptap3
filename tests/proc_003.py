@@ -15,7 +15,7 @@ out()
 ##     validity: -1
 ## ok testcases: 1 / 10
 ##      bailout: no
-##       stdout: program
-##       stdout: engine
-##       stdout: object
-##       stdout: Terminate
+##       stderr: program
+##       stderr: engine
+##       stderr: object
+##       stderr: Terminate

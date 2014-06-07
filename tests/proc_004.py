@@ -15,10 +15,10 @@ out()
 ##     validity: -1
 ## ok testcases: 4 / 10
 ##      bailout: no
-##       stdout: program
-##       stdout: engine
-##       stdout: object
-##       stdout: Terminate
-##       stdout: SKIP
-##       stdout: Setup required
-##       stdout: Setup missing
+##       stderr: program
+##       stderr: engine
+##       stderr: object
+##       stderr: Terminate
+##       stderr: SKIP
+##       stderr: Setup required
+##       stderr: Setup missing

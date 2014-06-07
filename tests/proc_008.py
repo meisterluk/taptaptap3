@@ -14,6 +14,6 @@ out()
 ##     validity: 0
 ## ok testcases: 1 / 1
 ##      bailout: no
-##       stdout: 2 * 2 == 4
-##       stdout: TAP version 13
-##       stdout: arithmetics checked
+##       stderr: 2 * 2 == 4
+##       stderr: TAP version 13
+##       stderr: arithmetics checked

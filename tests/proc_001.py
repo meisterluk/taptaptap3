@@ -13,4 +13,4 @@ out()
 ##     validity: -1
 ## ok testcases: 1 / 2
 ##      bailout: no
-##       stdout: failing
+##       stderr: failing

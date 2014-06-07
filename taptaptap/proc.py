@@ -15,8 +15,12 @@
     (c) BSD 3-clause.
 """
 
+from __future__ import print_function
+
 from .impl import TapDocument
 from .api import TapWriter
+
+import sys
 
 
 writer = None
@@ -80,4 +84,4 @@ def bailout(comment=''):
 
 def out():
     _create()
-    print(unicode(writer))
+    print(unicode(writer), file=sys.stderr)

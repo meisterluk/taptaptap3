@@ -12,6 +12,6 @@ out()
 ##     validity: 0
 ## ok testcases: 0 / 1
 ##      bailout: no
-##       stdout: TypeError
-##       stdout: TAP version 12
-##       stdout: environment does
+##       stderr: TypeError
+##       stderr: TAP version 12
+##       stderr: environment does

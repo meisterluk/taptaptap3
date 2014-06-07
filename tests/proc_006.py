@@ -21,4 +21,4 @@ out()
 ##     validity: 0
 ## ok testcases: 10 / 10
 ##      bailout: no
-##       stdout: Find the object
+##       stderr: Find the object

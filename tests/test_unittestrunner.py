@@ -8,9 +8,9 @@ from taptaptap.api import UnittestRunner
 ##     validity: 0
 ## ok testcases: 3 / 3
 ##      bailout: no
-##       stdout: 1..3
-##       stdout: test_shuffle
-##       stdout: Running time
+##       stderr: 1..3
+##       stderr: test_shuffle
+##       stderr: Running time
 
 
 class TestSequenceFunctions(unittest.TestCase):

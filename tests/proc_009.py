@@ -17,5 +17,5 @@ out()
 ##     validity: -2
 ## ok testcases: 3 / 4
 ##      bailout: yes
-##       stdout: 4 + 8
+##       stderr: 4 + 8
 ##       stderr: Bail out!

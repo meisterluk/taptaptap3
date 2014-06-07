@@ -19,8 +19,8 @@ out()
 ##     validity: -1
 ## ok testcases: 6 / 13
 ##      bailout: no
-##       stdout: 2 * 2 == 4
-##       stdout: TODO
-##       stdout: ~TRUE
-##       stdout: ~True
-##       stdout: ~true
+##       stderr: 2 * 2 == 4
+##       stderr: TODO
+##       stderr: ~TRUE
+##       stderr: ~True
+##       stderr: ~true

@@ -12,4 +12,4 @@ out()
 ##     validity: 0
 ## ok testcases: 1 / 1
 ##      bailout: no
-##       stdout: Proving
+##       stderr: Proving

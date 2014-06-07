@@ -15,6 +15,6 @@ out()
 ##     validity: -2
 ## ok testcases: 2 / 2
 ##      bailout: yes
-##       stdout: before
+##       stderr: before
 ##       stderr: Bail out! now
-##       stdout: after
+##       stderr: after
