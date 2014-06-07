@@ -111,10 +111,10 @@ class TapWriter(object):
     def __init__(self):
         self._plan, self.skip = None, None
         self.entries, self.comments = [], []
-        self.version = TapDocument.DEFAULT_VERSION
+        self.version = None
 
     def plan(self, first=None, last=None, skip=u'', tests=None,
-             tapversion=TapDocument.DEFAULT_VERSION):
+             tapversion=None):
         """Define plan. Provide integers `first` and `last` XOR `tests`.
         `skip` is a non-empty message if the whole testsuite was skipped.
         """
@@ -127,6 +127,7 @@ class TapWriter(object):
 
         self.skip = skip
         self.version = tapversion
+
         return self
 
     def testcase(self, ok=True, description=u'', skip=u'', todo=u''):
@@ -163,7 +164,9 @@ class TapWriter(object):
 
     def finalize(self):
         """Finalize this TapDocument"""
-        doc = TapDocument(self.version)
+        doc = TapDocument()
+        if self.version:
+            doc.add_version_line(self.version)
         if self._plan:
             doc.add_plan(self._plan[0], self._plan[1], self.skip)
 

@@ -685,7 +685,8 @@ class TapDocument(object):
         """Unicode representation of TAP document"""
         out = u''
         # version line
-        if self.metadata['version_written']:
+        if self.metadata['version_written'] or \
+            self.metadata['version'] != self.DEFAULT_VERSION:
             out += u'TAP version {:d}'.format(self.metadata['version'])
             out += os.linesep
         # header comments
