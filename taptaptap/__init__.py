@@ -32,7 +32,7 @@
 """
 
 __author__ = 'Lukas Prokop <admin@lukas-prokop.at>'
-__version__ = '1.0.4'
+__version__ = '1.1.0'
 __license__ = '3-clause BSD license'
 __docformat__ = 'reStructuredText'
 
