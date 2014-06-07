@@ -209,9 +209,10 @@ class TapWriter(object):
         return str(self.doc)
 
 
-def TapCreator(func, **tap_kwargs):
+def TapCreator(func):
     """TAP document decorator.
-    Use it like
+    The wrapped function can optionally accept parameters first, last or tests
+    to specify the number of tests. Use it like
 
         >>> @taptaptap.TapCreator
         >>> def runTests():
@@ -230,25 +231,35 @@ def TapCreator(func, **tap_kwargs):
         Bail out! System failure!
     """
     writer = TapWriter()
-    if ('first' in tap_kwargs and 'last' in tap_kwargs) or \
-       ('tests' in tap_kwargs):
-        writer.plan(**tap_kwargs)
-
     def inner(*args, **kwargs):
         try:
+            count = 0
             for result in func(*args, **kwargs):
                 result['ok']  # required param
                 writer.testcase(**result)
+                count += 1
+
         except TapBailout as e:
             writer.bailout(e.message)
+
+        finally:
+            if 'first' in kwargs and 'last' in kwargs:
+                writer.plan(first=int(kwargs['first']),
+                            last=int(kwargs['last']))
+            elif 'tests' in kwargs:
+                writer.plan(tests=int(kwargs['tests']))
+            else:
+                writer.plan(tests=count)
+
         return unicode(writer)
 
     return inner
 
 
-def SimpleTapCreator(func, **tap_kwargs):
+def SimpleTapCreator(func):
     """TAP document decorator.
-    Use it like
+    The wrapped function can optionally accept parameters first, last or tests
+    to specify the number of tests. Use it like
 
         >>> @taptaptap.SimpleTapCreator
         >>> def runTests():
@@ -262,29 +273,51 @@ def SimpleTapCreator(func, **tap_kwargs):
         ok
         not ok
     """
-    version = tap_kwargs.get('version', TapDocument.DEFAULT_VERSION)
-    skip = tap_kwargs.get('skip', False)
-    doc = TapDocument(version=version, skip=skip)
-    plan_added = False
-    skip_comment = tap_kwargs.get('skip_comment', u'')
-
-    if 'first' in tap_kwargs and 'last' in tap_kwargs:
-        doc.add_plan(first=tap_kwargs['first'],
-                     last=tap_kwargs['last'], skip_comment=skip_comment)
-        plan_added = True
 
     def inner(*args, **kwargs):
+        tcs = []
         try:
+            version = kwargs.get('version', TapDocument.DEFAULT_VERSION)
+            skip = kwargs.get('skip', False)
+            doc = TapDocument(version=version, skip=skip)
+
             count = 0
             for result in func(*args, **kwargs):
                 tc = TapTestcase()
                 tc.field = bool(result)
-                doc.add_testcase(tc)
+                tcs.append(tc)
                 count += 1
-            if not plan_added:
-                doc.add_plan(first=1, last=count, skip_comment=skip_comment)
-        except TapBailout:
-            doc.add_bailout()
+
+        except TapBailout as bailout:
+            tcs.append(bailout)
+
+        finally:
+            # retrieve plan
+            metadata = {}
+            if 'skip_comment' in kwargs:
+                metadata['skip_comment'] = kwargs['skip_comment']
+            
+            if 'first' in kwargs and 'last' in kwargs:
+                metadata['first'] = int(kwargs['first'])
+                metadata['last'] = int(kwargs['last'])
+
+            elif 'tests' in kwargs:
+                metadata['first'] = 1
+                metadata['last'] = int(kwargs['tests'])
+
+            else:
+                metadata['first'] = 1
+                metadata['last'] = count
+
+            doc.add_plan(**metadata)
+
+            # retrieve testcases
+            for tc in tcs:
+                if tc.is_testcase:
+                    doc.add_testcase(tc)
+                else:
+                    doc.add_bailout(tc)
+
         return unicode(doc)
 
     return inner
