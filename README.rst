@@ -5,7 +5,7 @@ Documentation
 :author:        Lukas Prokop
 :date:          Feb-Apr 2014
 :license:       BSD 3-clause
-:version:       1.1.0
+:version:       1.1.1
 :issues:        http://github.com/meisterluk/taptaptap/issues
 
 Test Anything Protocol handling for cats \*rawwr*

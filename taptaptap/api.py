@@ -152,9 +152,12 @@ class TapWriter(object):
         """Add a failed testcase entry to the TapDocument"""
         return self.testcase(False, description, skip, todo)
 
-    def bailout(self, comment):
+    def bailout(self, comment, data=None):
         """Add Bailout to document"""
-        self.entries.append(TapBailout(comment))
+        bailout = TapBailout(comment)
+        if data:
+            bailout.data = data
+        self.entries.append(bailout)
         return self
 
     def write(self, line):
@@ -240,7 +243,7 @@ def TapCreator(func):
                 count += 1
 
         except TapBailout as e:
-            writer.bailout(e.message)
+            writer.bailout(e.message, data=e.data)
 
         finally:
             if 'first' in kwargs and 'last' in kwargs:
