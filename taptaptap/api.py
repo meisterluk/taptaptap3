@@ -233,8 +233,8 @@ def TapCreator(func):
         not ok 3 - 2 + 2 = 5  # TODO Fix surveillance state
         Bail out! System failure!
     """
-    writer = TapWriter()
     def inner(*args, **kwargs):
+        writer = TapWriter()
         try:
             count = 0
             for result in func(*args, **kwargs):
