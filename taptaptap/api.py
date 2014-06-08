@@ -239,7 +239,15 @@ def TapCreator(func):
             count = 0
             for result in func(*args, **kwargs):
                 result['ok']  # required param
+
+                data = result.get('data')
+                if 'data' in result:
+                    del result['data']
+
                 writer.testcase(**result)
+                if data:
+                    for cmt in data:
+                        writer.write(cmt)
                 count += 1
 
         except TapBailout as e:
