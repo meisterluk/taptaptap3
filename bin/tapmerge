@@ -10,10 +10,11 @@ import argparse
 
 
 def main(args):
-    doc1 = taptaptap.parse_file(args.file1)
-    doc2 = taptaptap.parse_file(args.file2)
+    if len(args.files) <= 1:
+        raise ValueError("You must at least specify two TAP files")
 
-    doc3 = taptaptap.merge(doc1, doc2)
+    docs = [taptaptap.parse_file(f) for f in args.files]
+    doc3 = taptaptap.merge(*docs)
 
     if args.outfile:
         with open(args.outfile, 'w') as fp:
@@ -23,9 +24,9 @@ def main(args):
 
 if __name__ == '__main__':
     # command line parameter parsing
-    parser = argparse.ArgumentParser(description='Merge two TAP files.')
-    parser.add_argument('file1', metavar='file1', help='The first TAP file')
-    parser.add_argument('file2', metavar='file2', help='The second TAP file')
+    parser = argparse.ArgumentParser(description='Merge two or more TAP files.')
+    parser.add_argument('files', metavar='F', nargs='+',
+                        help='At least two TAP files to merge')
     parser.add_argument('-o', '--outputfile', dest='outfile', action='store',
                         help='write to filepath instead of stdout')
 
