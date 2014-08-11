@@ -9,11 +9,21 @@ import taptaptap
 import argparse
 
 
+def read_stdin():
+    """Read and parse string from stdin"""
+    content = u''
+    encoding = sys.stdin.encoding or sys.getdefaultencoding()
+    for line in sys.stdin:
+        content += line.decode(encoding)
+    return taptaptap.parse_string(content)
+
+
 def main(args):
     if len(args.files) <= 1:
         raise ValueError("You must at least specify two TAP files")
 
-    docs = [taptaptap.parse_file(f) for f in args.files]
+    docs = [f == '-' and read_stdin() or taptaptap.parse_file(f)
+            for f in args.files]
     doc3 = taptaptap.merge(*docs)
 
     if args.outfile:

@@ -14,8 +14,16 @@ import sys
 import taptaptap
 import argparse
 
+
 def main(args):
-    doc = taptaptap.parse_file(args.report)
+    if args.report == '-':
+        content = u''
+        encoding = sys.stdin.encoding or sys.getdefaultencoding()
+        for line in sys.stdin:
+            content += line.decode(encoding)
+        doc = taptaptap.parse_string(content)
+    else:
+        doc = taptaptap.parse_file(args.report)
     if doc.bailed():
         return -2
     elif doc.valid():
@@ -27,6 +35,7 @@ if __name__ == '__main__':
     # command line parameter parsing
     desc = ''
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('report', metavar='report', help='the TAP file to read')
+    parser.add_argument('report', metavar='report',
+                        help='the TAP file to read, dash for stdin')
 
     sys.exit(main(parser.parse_args()))
