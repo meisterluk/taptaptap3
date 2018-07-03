@@ -7,23 +7,23 @@ Reads a TAP file and exit status indicates success:
   0:  everything is fine
  -1:  some testcase is missing or failed
  -2:  A bailout was thrown
-If some text occurs at stderr, taptaptap has a problem
+If some text occurs at stderr, taptaptap3 has a problem
 """
 
 import sys
-import taptaptap
+import taptaptap3
 import argparse
 
 
 def main(args):
-    if args.report == '-':
-        content = u''
+    if args.report == "-":
+        content = u""
         encoding = sys.stdin.encoding or sys.getdefaultencoding()
         for line in sys.stdin:
             content += line.decode(encoding)
-        doc = taptaptap.parse_string(content)
+        doc = taptaptap3.parse_string(content)
     else:
-        doc = taptaptap.parse_file(args.report)
+        doc = taptaptap3.parse_file(args.report)
     if doc.bailed():
         return -2
     elif doc.valid():
@@ -31,11 +31,13 @@ def main(args):
     else:
         return -1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # command line parameter parsing
-    desc = ''
+    desc = ""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('report', metavar='report',
-                        help='the TAP file to read, dash for stdin')
+    parser.add_argument(
+        "report", metavar="report", help="the TAP file to read, dash for stdin"
+    )
 
     sys.exit(main(parser.parse_args()))

@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap.proc import plan, not_ok, out
+from taptaptap3.proc import plan, not_ok, out
 
-plan(tests=1, tapversion=12, skip='environment does not fit')
-not_ok('TypeError')
+plan(tests=1, tapversion=12, skip="environment does not fit")
+not_ok("TypeError")
 
 out()
-
 
 
 ##     validity: 0

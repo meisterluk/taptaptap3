@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -15,7 +15,6 @@
     (c) BSD 3-clause.
 """
 
-from __future__ import print_function
 
 from .impl import TapDocument
 from .api import TapWriter
@@ -34,8 +33,9 @@ def _create():
         writer = TapWriter()
 
 
-def plan(first=None, last=None, skip=u'', tests=None,
-         tapversion=TapDocument.DEFAULT_VERSION):
+def plan(
+    first=None, last=None, skip="", tests=None, tapversion=TapDocument.DEFAULT_VERSION
+):
     """Define a plan. Provide integers `first` and `last` XOR `tests`.
     `skip` is a non-empty message if the whole testsuite was skipped.
     """
@@ -50,32 +50,32 @@ def write(line):
     writer.write(line)
 
 
-def ok(description=u'', skip=False, todo=False):
+def ok(description="", skip=False, todo=False):
     """Add a succeeded testcase entry"""
     _create()
 
     if skip is True:
-        skip = u' '
+        skip = " "
     elif skip is False:
-        skip = u''
+        skip = ""
 
     if todo is True:
-        todo = u' '
+        todo = " "
     elif todo is False:
-        todo = u''
+        todo = ""
 
     writer.testcase(True, description, skip, todo)
     return True
 
 
-def not_ok(description=u'', skip=False, todo=False):
+def not_ok(description="", skip=False, todo=False):
     """Add a failed testcase entry"""
     _create()
     writer.testcase(False, description, skip, todo)
     return True
 
 
-def bailout(comment=''):
+def bailout(comment=""):
     """Add Bailout to document"""
     _create()
     writer.bailout(comment)
@@ -83,5 +83,6 @@ def bailout(comment=''):
 
 
 def out():
+    """Print TAP output to stderr"""
     _create()
-    print(unicode(writer), file=sys.stderr)
+    print(str(writer), file=sys.stderr)

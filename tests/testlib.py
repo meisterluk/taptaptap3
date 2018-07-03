@@ -1,26 +1,24 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 
 import re
 import sys
 import codecs
 import subprocess
-import taptaptap
+import taptaptap3
 
-success = lambda x: print('  [ OK ]  ' + x)
+success = lambda x: print("  [ OK ]  " + x)
 
 
 def call_module(filepath):
     """Call TAP file with module loading and return the metrics tuple"""
-    cmd = u'python -R -t -t -m taptaptap.__main__'.split() + [filepath]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    cmd = "python -R -t -t -m taptaptap3.__main__".split() + [filepath]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    encoding = sys.stdout.encoding or 'utf-8'
+    encoding = sys.stdout.encoding or "utf-8"
     out, err = [v.decode(encoding) for v in proc.communicate()]
     valid = proc.returncode
-    doc = taptaptap.parse_string(out)
+    doc = taptaptap3.parse_string(out)
     ok, total, bailout = doc.count_ok(), len(doc), doc.bailed()
 
     # err and out exchanged by intention
@@ -29,37 +27,55 @@ def call_module(filepath):
 
 def call_tapvalidate(args):
     """Call tapvalidate with args and return the metrics tuple"""
-    cmd = ['tapvalidate'] + args
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    cmd = ["tapvalidate"] + args
 
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc.communicate()
-    with codecs.open(args[0], encoding='utf-8') as fp:
+
+    # if the error message of 'tapvalidate' prints something like
+    #    >>> __import__('pkg_resources').run_script('taptaptap3==3.0.0', 'main')
+    #   Traceback (most recent call last):
+    #     File "<stdin>", line 1, in <module>
+    #     File ".../venv/lib/python3.6/site-packages/pkg_resources/__init__.py", line 654, in run_script
+    #       self.require(requires)[0].run_script(script_name, ns)
+    #     File ".../venv/lib/python3.6/site-packages/pkg_resources/__init__.py", line 1425, in run_script
+    #       .format(**locals()),
+    #   pkg_resources.ResolutionError: Script 'scripts/main' not found in metadata at '.../venv/lib/python3.6/site-packages/taptaptap3-3.0.0-py3.6.egg/EGG-INFO'
+    # then make sure, that you create a development version of the package, not a production version:
+    #   NOT python3 setup.py install
+    #   BUT python3 setup.py develop
+    # this works for me(tm)
+
+    with codecs.open(args[0], encoding="utf-8") as fp:
         err = fp.read()
-    out = u''
+    out = ""
 
     valid = proc.returncode
-    doc = taptaptap.parse_string(err)
+    doc = taptaptap3.parse_string(err)
     ok, total, bailout = doc.count_ok(), len(doc), doc.bailed()
 
     return valid, ok, total, bailout, out, err
 
 
 def run_python_file(filepath):
-    """Run a python file using taptaptap and return the metrics tuple"""
-    proc = subprocess.Popen(['python', filepath], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    """Run a python file using taptaptap3 and return the metrics tuple"""
+    encoding = sys.stdout.encoding or "utf-8"
+
+    proc = subprocess.Popen(
+        ["python", filepath], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     proc.wait()
     out, err = proc.communicate()
+    out, err = out.decode(encoding), err.decode(encoding)
+    print(out, err)
 
-    with codecs.open(filepath, encoding='utf-8') as fp:
+    with codecs.open(filepath, encoding="utf-8") as fp:
         source = fp.read()
 
-    print()
-    if '## ' in source:
+    if "## " in source:
         # check conditions
         output = out or err
-        doc = taptaptap.parse_string(output)
+        doc = taptaptap3.parse_string(output)
 
         total = len(doc)
         bailout, ok = doc.bailed(), doc.count_ok()
@@ -73,19 +89,19 @@ def run_python_file(filepath):
         for line in source.splitlines():
             check_line(line, valid, ok, total, bailout, out, err)
 
-        success('Checked conditions in file')
+        success("Checked conditions in file")
     else:
         # only check exit code
         code = proc.returncode
-        assert code == 0, 'Unexpected exit code ' + str(code)
-        success('Exit code is fine')
+        assert code == 0, "Unexpected exit code " + str(code)
+        success("Exit code is fine")
 
 
 def run_tap_file(filepath):
     """Interpret a TAP file and test its conditions"""
-    doc = taptaptap.parse_file(filepath)
+    doc = taptaptap3.parse_file(filepath)
 
-    with codecs.open(filepath, encoding='utf-8') as fp:
+    with codecs.open(filepath, encoding="utf-8") as fp:
         err = fp.read()
 
     if doc.bailed():
@@ -95,14 +111,14 @@ def run_tap_file(filepath):
     else:
         valid = -1
 
-    return (valid, doc.count_ok(), len(doc), doc.bailed(), u'', err)
+    return (valid, doc.count_ok(), len(doc), doc.bailed(), "", err)
 
 
-validity = re.compile(u'##     validity: (-?\d+)', flags=re.I)
-tests    = re.compile(u'## ok testcases: (\d+) / (\d+)', flags=re.I)
-rbailout = re.compile(u'##      bailout: (no|yes)', flags=re.I)
-inout    = re.compile(u'##       stdout: (~?)(\S*)', flags=re.I)
-inerr    = re.compile(u'##       stderr: (~?)(\S*)', flags=re.I)
+validity = re.compile("##     validity: (-?\d+)", flags=re.I)
+tests = re.compile("## ok testcases: (\d+) / (\d+)", flags=re.I)
+rbailout = re.compile("##      bailout: (no|yes)", flags=re.I)
+inout = re.compile("##       stdout: (~?)(\S*)", flags=re.I)
+inerr = re.compile("##       stderr: (~?)(\S*)", flags=re.I)
 
 
 def check_line(line, valid, ok, total, bailout, stdout, stderr):
@@ -121,12 +137,13 @@ def check_line(line, valid, ok, total, bailout, stdout, stderr):
         expect_total = int(matches[1].group(2))
 
         msg = "Expected {} of {} to be 'ok' testcases. But got {}/{}"
-        assert (expect_ok, expect_total) == (ok, total), \
-            msg.format(expect_ok, expect_total, ok, total)
+        assert (expect_ok, expect_total) == (ok, total), msg.format(
+            expect_ok, expect_total, ok, total
+        )
         success("Ratio of ok / not-ok testcases is fine")
 
     elif matches[2]:
-        expect_bailout = matches[2].group(1) == 'yes'
+        expect_bailout = matches[2].group(1) == "yes"
         if expect_bailout and not bailout:
             raise AssertionError("Expected Bailout was not thrown")
         elif expect_bailout:
@@ -154,13 +171,13 @@ def check_line(line, valid, ok, total, bailout, stdout, stderr):
 
 
 def read_file(filepath, valid, ok, total, bailout, stdout, stderr):
-    with codecs.open(filepath, encoding='utf-8') as fp:
+    with codecs.open(filepath, encoding="utf-8") as fp:
         for line in fp.readlines():
             check_line(line, valid, ok, total, bailout, stdout, stderr)
 
 
 def validate(filepath):
-    if filepath.endswith('.py'):
+    if filepath.endswith(".py"):
         run_python_file(filepath)
     else:
         print()
@@ -173,7 +190,8 @@ def validate(filepath):
     print()
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
         arg = sys.argv[1]
     except IndexError:

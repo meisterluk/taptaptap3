@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
-    taptaptap
-    ~~~~~~~~~
+    taptaptap3
+    ~~~~~~~~~~
 
     An object-oriented module handling the Test Anything Protocol (TAP).
     It's capable of handling TAP files in version 13,
@@ -31,10 +31,10 @@
     (c) BSD 3-clause
 """
 
-__author__ = 'Lukas Prokop <admin@lukas-prokop.at>'
-__version__ = '1.1'
-__license__ = '3-clause BSD license'
-__docformat__ = 'reStructuredText'
+__author__ = "Lukas Prokop <admin@lukas-prokop.at>"
+__version__ = "1.1"
+__license__ = "3-clause BSD license"
+__docformat__ = "reStructuredText"
 
 from .impl import YamlData, TapTestcase, TapNumbering, TapActualNumbering
 from .impl import TapDocument, TapDocumentValidator, TapDocumentIterator

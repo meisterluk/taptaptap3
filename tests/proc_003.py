@@ -1,15 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap.proc import plan, ok, not_ok, out
+from taptaptap3.proc import plan, ok, not_ok, out
 
 plan(tests=10)
-ok('Starting the program')
-not_ok('Starting the engine')
-not_ok('Find the object')
-not_ok('Terminate')
+ok("Starting the program")
+not_ok("Starting the engine")
+not_ok("Find the object")
+not_ok("Terminate")
 
 out()
-
 
 
 ##     validity: -1

@@ -1,14 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap.proc import plan, ok, out
+from taptaptap3.proc import plan, ok, out
 
 plan(first=1, last=3)
-ok('Starting the program')
-ok('Starting the engine')
-ok('Find the object')
+ok("Starting the program")
+ok("Starting the engine")
+ok("Find the object")
 
 out()
-
 
 
 ##     validity: 0

@@ -1,15 +1,15 @@
-import taptaptap
+import taptaptap3
 
-@taptaptap.TapCreator
+
+@taptaptap3.TapCreator
 def runTests():
-    yield {'ok': True, 'description': '1 + 1 == 2'}
-    yield {'ok': True,
-           'description': 'E = mc^2', 'skip': 'Still in discussion'}
-    yield {'ok': False, 'description': '2 + 2 = 5',
-           'todo': 'Fix surveillance state'}
-    raise taptaptap.exc.TapBailout("System failure!")
+    yield {"ok": True, "description": "1 + 1 == 2"}
+    yield {"ok": True, "description": "E = mc^2", "skip": "Still in discussion"}
+    yield {"ok": False, "description": "2 + 2 = 5", "todo": "Fix surveillance state"}
+    raise taptaptap3.exc.TapBailout("System failure!")
 
-print runTests()
+
+print(runTests())
 
 ##     validity: -2
 ## ok testcases: 2 / 3

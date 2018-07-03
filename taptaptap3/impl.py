@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -26,8 +26,6 @@
     (c) BSD 3-clause.
 """
 
-from __future__ import division, absolute_import
-from __future__ import print_function, unicode_literals
 
 from .exc import TapParseError, TapBailout, TapMissingPlan, TapInvalidNumbering
 
@@ -40,18 +38,27 @@ import logging
 import yamlish
 import collections
 
-__all__ = ['YamlData', 'TapTestcase', 'TapNumbering', 'TapActualNumbering',
-           'TapDocument', 'TapDocumentValidator', 'TapDocumentIterator',
-           'TapDocumentActualIterator', 'TapDocumentFailedIterator',
-           'TapDocumentTokenizer', 'TapDocumentParser', 'TapProtocol',
-           'TapWrapper', 'merge']
+__all__ = [
+    "YamlData",
+    "TapTestcase",
+    "TapNumbering",
+    "TapActualNumbering",
+    "TapDocument",
+    "TapDocumentValidator",
+    "TapDocumentIterator",
+    "TapDocumentActualIterator",
+    "TapDocumentFailedIterator",
+    "TapDocumentTokenizer",
+    "TapDocumentParser",
+    "TapProtocol",
+    "TapWrapper",
+    "merge",
+]
 
 
-STR_ENC = 'utf-8'
-
-
-class YamlData(object):
+class YamlData:
     """YAML data storage"""
+
     def __init__(self, data):
         self.data = data
 
@@ -61,28 +68,28 @@ class YamlData(object):
     def __iter__(self):
         return iter(self.data)
 
-    def __unicode__(self):
+    def __str__(self):
         return yamlish.dumps(self.data)
 
 
-class TapTestcase(object):
+class TapTestcase:
     """Object representation of an entry in a TAP file"""
     is_testcase = True
     is_bailout = False
 
-    def __init__(self, field=None, number=None, description=u''):
+    def __init__(self, field=None, number=None, description=""):
         # test line
         self._field = field
         self._number = number
         self.description = description
-        self._directives = {'skip': [], 'todo': []}
+        self._directives = {"skip": [], "todo": []}
         # data
         self._data = []
 
     @staticmethod
     def indent(text, indent=2):
         """Indent all lines of ``text`` by ``indent`` spaces"""
-        return re.sub('(^|\n)(?!\n|$)', '\\1' + (' ' * indent), text)
+        return re.sub("(^|\n)(?!\n|$)", "\\1" + (" " * indent), text)
 
     @property
     def field(self):
@@ -95,9 +102,9 @@ class TapTestcase(object):
         try:
             if value in [None, True, False]:
                 self._field = value
-            elif value.rstrip() == 'ok':
+            elif value.rstrip() == "ok":
                 self._field = True
-            elif value.rstrip() == 'not ok':
+            elif value.rstrip() == "not ok":
                 self._field = False
             else:
                 raise ValueError(errmsg)
@@ -133,29 +140,29 @@ class TapTestcase(object):
     @property
     def directive(self):
         """A TAP directive like 'TODO work in progress'"""
-        out = u''
-        for skip_msg in self._directives['skip']:
-            out += u'SKIP {} '.format(skip_msg.strip())
-        for todo_msg in self._directives['todo']:
-            out += u'TODO {} '.format(todo_msg.strip())
-        return out and out[:-1] or u''
+        out = ""
+        for skip_msg in self._directives["skip"]:
+            out += "SKIP {} ".format(skip_msg.strip())
+        for todo_msg in self._directives["todo"]:
+            out += "TODO {} ".format(todo_msg.strip())
+        return out and out[:-1] or ""
 
     @directive.setter
     def directive(self, value):
         # reset
-        self._directives['skip'] = []
-        self._directives['todo'] = []
+        self._directives["skip"] = []
+        self._directives["todo"] = []
 
         if not value:
             return
 
-        delimiters = ['skip', 'todo']
-        value = value.lstrip('#\t ')
-        parts = re.split('(' + '|'.join(delimiters) + ')', value, flags=re.I)
+        delimiters = ["skip", "todo"]
+        value = value.lstrip("#\t ")
+        parts = re.split("(" + "|".join(delimiters) + ")", value, flags=re.I)
         parts = [p for p in parts if p]
 
         if not parts or parts[0].lower() not in delimiters:
-            raise ValueError('Directive must start with SKIP or TODO')
+            raise ValueError("Directive must start with SKIP or TODO")
 
         key = None
         key_just_set = False
@@ -163,12 +170,12 @@ class TapTestcase(object):
             if val.lower() in delimiters:
                 key = val.lower()
                 if key_just_set:
-                    self._directives[key] = u''
+                    self._directives[key] = ""
                 key_just_set = True
             else:
                 if key is None:
-                    msg = 'Directive must be sequence of TODOs and SKIPs'
-                    raise ValueError(msg + ' but is {}'.format(value))
+                    msg = "Directive must be sequence of TODOs and SKIPs"
+                    raise ValueError(msg + " but is {}".format(value))
                 self._directives[key].append(val)
                 key_just_set = False
 
@@ -184,7 +191,7 @@ class TapTestcase(object):
     @data.setter
     def data(self, value):
         msg = "If you set data explicitly, it has to be a list"
-        assert hasattr(value, '__iter__'), msg
+        assert hasattr(value, "__iter__"), msg
 
         self._data = copy.deepcopy(value)
 
@@ -195,28 +202,28 @@ class TapTestcase(object):
     @property
     def todo(self):
         """Is a TODO flag annotated to this testcase?"""
-        return bool(self._directives['todo'])
+        return bool(self._directives["todo"])
 
     @todo.setter
     def todo(self, what):
         """Add a TODO flag to this testcase.
 
-        :param unicode what:    Which work is still left?
+        :param str what:    Which work is still left?
         """
-        self._directives['todo'].append(what) if what else None
+        self._directives["todo"].append(what) if what else None
 
     @property
     def skip(self):
         """Is a SKIP flag annotated to this testcase?"""
-        return bool(self._directives['skip'])
+        return bool(self._directives["skip"])
 
     @skip.setter
     def skip(self, why):
         """Add a SKIP flag to this testcase.
 
-        :param unicode why:    Why shall this testcase be skipped?
+        :param str why:    Why shall this testcase be skipped?
         """
-        self._directives['skip'].append(why) if why else None
+        self._directives["skip"].append(why) if why else None
 
     def copy(self):
         """Return a copy of myself"""
@@ -226,9 +233,13 @@ class TapTestcase(object):
 
     def __eq__(self, other):
         """Test equality"""
-        conds = [self.field == other.field, self.number == other.number,
-                 self.description == other.description,
-                 self.directive == other.directive, self.data == self.data]
+        conds = [
+            self.field == other.field,
+            self.number == other.number,
+            self.description == other.description,
+            self.directive == other.directive,
+            self.data == self.data,
+        ]
 
         # if one number is None and the other not, it's fine
         is_none = [self.number is None, other.number is None]
@@ -240,50 +251,50 @@ class TapTestcase(object):
     def __getstate__(self):
         """Return object state for external storage"""
         return {
-            'field': self.field,
-            'number': self.number,
-            'description': self.description or u'',
-            'directives': self._directives,
-            'data': self.data
+            "field": self.field,
+            "number": self.number,
+            "description": self.description or "",
+            "directives": self._directives,
+            "data": self.data,
         }
 
     def __setstate__(self, obj):
         """Import data using the provided object"""
-        self.field = obj['field']
-        self.number = obj['number']
-        self.description = obj['description']
-        self._directives = obj['directives']
-        self.data = obj['data']
+        self.field = obj["field"]
+        self.number = obj["number"]
+        self.description = obj["description"]
+        self._directives = obj["directives"]
+        self.data = obj["data"]
 
     def __repr__(self):
         """Representation of this object"""
-        field = 'ok' if self.field else 'not ok'
-        num = '' if self.number is None else ' #{}'.format(self._number)
-        todo_skip = ''
+        field = "ok" if self.field else "not ok"
+        num = "" if self.number is None else " #{}".format(self._number)
+        todo_skip = ""
 
         if self.todo and self.skip:
-            todo_skip = ' with TODO and SKIP flag'
+            todo_skip = " with TODO and SKIP flag"
         elif self.todo:
-            todo_skip = ' with TODO flag'
+            todo_skip = " with TODO flag"
         elif self.skip:
-            todo_skip = ' with SKIP flag'
+            todo_skip = " with SKIP flag"
 
-        return u'<TapTestcase {}{}{}>'.format(field, num, todo_skip)
+        return "<TapTestcase {}{}{}>".format(field, num, todo_skip)
 
-    def __unicode__(self):
-        """TAP testcase representation as a unicode object"""
+    def __str__(self):
+        """TAP testcase representation as a string object"""
         num, desc, directive = self.number, self.description, self.directive
 
-        out = u'ok ' if self.field else u'not ok '
+        out = "ok " if self.field else "not ok "
         if num is not None:
-            out += unicode(num) + u' '
+            out += str(num) + " "
         if desc:
-            out += u'- {} '.format(desc)
+            out += "- {} ".format(desc)
         if directive:
-            out += u' # {} '.format(directive)
+            out += " # {} ".format(directive)
         out = out.rstrip()
         if self.data:
-            data = [unicode(d) for d in self.data]
+            data = [str(d) for d in self.data]
             out += os.linesep + (os.linesep).join(data)
 
         if out.endswith(os.linesep):
@@ -291,11 +302,8 @@ class TapTestcase(object):
         else:
             return out + os.linesep
 
-    def __str__(self):
-        return unicode(self).encode(STR_ENC)
 
-
-class TapNumbering(object):
+class TapNumbering:
     """TAP testcase numbering. In TAP documents it is called 'the plan'."""
 
     def __init__(self, first=None, last=None, tests=None, lenient=True):
@@ -307,7 +315,7 @@ class TapNumbering(object):
         will raise a TapInvalidNumbering Exception.
         Otherwise it will just be normalized (set `last` to `first`).
         """
-        arg_errmsg = 'Either provide a first and last or a number of tests'
+        arg_errmsg = "Either provide a first and last or a number of tests"
         if first and last and tests:
             raise ValueError(arg_errmsg)
 
@@ -320,8 +328,8 @@ class TapNumbering(object):
             elif int(last) < int(first):
                 self.length = 0
                 if not lenient:
-                    msg = 'range {}..{} is decreasing'.format(first, last)
-                    msg = 'Invalid testcase numbering: ' + msg
+                    msg = "range {}..{} is decreasing".format(first, last)
+                    msg = "Invalid testcase numbering: " + msg
                     raise TapInvalidNumbering(msg)
 
         elif tests is not None:
@@ -331,12 +339,12 @@ class TapNumbering(object):
         else:
             raise ValueError(arg_errmsg)
 
-        assert(self.first >= 0 and self.length >= 0)
+        assert self.first >= 0 and self.length >= 0
 
     def __len__(self):
         return self.length
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
 
     def __contains__(self, tc_number):
@@ -353,30 +361,30 @@ class TapNumbering(object):
 
     def normalized_plan(self):
         """Return a normalized plan where first=1"""
-        return '{:d}..{:d}'.format(1, self.length)
+        return "{:d}..{:d}".format(1, self.length)
 
     def range(self):
         """Get range of this numbering: (min, max)"""
         return (self.first, self.first + self.length - 1)
 
     def __getstate__(self):
-        return {'first': self.first, 'length': self.length}
+        return {"first": self.first, "length": self.length}
 
     def __setstate__(self, state):
-        self.first = state['first']
-        self.length = state['length']
+        self.first = state["first"]
+        self.length = state["length"]
 
     def __iter__(self):
         return iter(range(self.first, self.first + self.length))
 
-    def __unicode__(self):
-        """Return unicode representation of plan.
+    def __str__(self):
+        """Return string representation of plan.
         If it was initially a decreasing range, first=last now.
         """
-        return '{:d}..{:d}'.format(self.first, self.first + self.length - 1)
+        return "{:d}..{:d}".format(self.first, self.first + self.length - 1)
 
     def __repr__(self):
-        return '<TapNumbering {}>'.format((self.first, self.length))
+        return "<TapNumbering {}>".format((self.first, self.length))
 
 
 class TapActualNumbering(list):
@@ -384,7 +392,7 @@ class TapActualNumbering(list):
     pass
 
 
-class TapDocument(object):
+class TapDocument:
     """An object representing a TAP document. Also acts as context manager."""
     DEFAULT_VERSION = 13
 
@@ -393,60 +401,60 @@ class TapDocument(object):
         self.entries = []
         self.metadata = {
             # version line
-            'version': version,
-            'version_written': False,
+            "version": version,
+            "version_written": False,
             # comment lines before first testcase
-            'header_comment': [],
+            "header_comment": [],
             # TAP plan
-            'numbering': None,
-            'plan_at_beginning': True,
-            'skip': bool(skip),
-            'skip_comment': u''
+            "numbering": None,
+            "plan_at_beginning": True,
+            "skip": bool(skip),
+            "skip_comment": "",
         }
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
 
     @property
     def version(self):
         """Get TAP version for this document"""
-        return self.metadata['version']
+        return self.metadata["version"]
 
     @property
     def skip(self):
         """Was this document skipped in the test run?"""
-        return self.metadata['skip']
+        return self.metadata["skip"]
 
     # set information
 
     def set_version(self, version=DEFAULT_VERSION):
         """Set TAP version of this document"""
-        self.metadata['version'] = int(version)
+        self.metadata["version"] = int(version)
 
-    def set_skip(self, skip_comment=u''):
+    def set_skip(self, skip_comment=""):
         """Set skip annotation for this document"""
         if skip_comment:
-            self.metadata['skip'] = True
-            self.metadata['skip_comment'] = skip_comment
+            self.metadata["skip"] = True
+            self.metadata["skip_comment"] = skip_comment
         else:
-            self.metadata['skip'] = False
+            self.metadata["skip"] = False
 
     def add_version_line(self, version=DEFAULT_VERSION):
         """Add information of version lines like 'TAP version 13'"""
         self.set_version(version)
-        self.metadata['version_written'] = True
+        self.metadata["version_written"] = True
 
     def add_header_line(self, line):
         """Add header comment line for TAP document"""
         if line.count(os.linesep) > 1:
             raise ValueError("Header line must only be 1 (!) line")
-        line = unicode(line).rstrip() + os.linesep
-        self.metadata['header_comment'] += [line]
+        line = str(line).rstrip() + os.linesep
+        self.metadata["header_comment"] += [line]
 
-    def add_plan(self, first, last, skip_comment=u'', at_beginning=True):
+    def add_plan(self, first, last, skip_comment="", at_beginning=True):
         """Add information of a plan like '1..3 # SKIP wip'"""
-        self.metadata['plan_at_beginning'] = bool(at_beginning)
-        self.metadata['numbering'] = TapNumbering(first=first, last=last)
+        self.metadata["plan_at_beginning"] = bool(at_beginning)
+        self.metadata["numbering"] = TapNumbering(first=first, last=last)
         if skip_comment:
             self.set_skip(skip_comment)
 
@@ -461,21 +469,21 @@ class TapDocument(object):
     # processing
 
     @staticmethod
-    def create_plan(first, last, comment=u'', skip=False):
-        plan = u'{:d}..{:d}'.format(first, last)
+    def create_plan(first, last, comment="", skip=False):
+        plan = "{:d}..{:d}".format(first, last)
 
         if os.linesep in comment:
-            raise ValueError('Plan comment must not contain newline')
+            raise ValueError("Plan comment must not contain newline")
 
         if skip:
             if not comment.strip():
-                comment = '  # SKIP'
-            elif 'skip' not in comment.lower():
-                comment = '  # SKIP ' + comment
+                comment = "  # SKIP"
+            elif "skip" not in comment.lower():
+                comment = "  # SKIP " + comment
             else:
-                comment = '  # ' + comment.strip()
+                comment = "  # " + comment.strip()
         else:
-            comment = ''
+            comment = ""
 
         return plan + comment
 
@@ -483,8 +491,8 @@ class TapDocument(object):
 
     def __len__(self):
         """Return number of testcases in this document"""
-        if self.metadata['numbering']:
-            return len(self.metadata['numbering'])
+        if self.metadata["numbering"]:
+            return len(self.metadata["numbering"])
         return self.actual_length()
 
     def actual_length(self):
@@ -497,30 +505,34 @@ class TapDocument(object):
 
     def range(self):
         """Get range like ``(1, 2)`` for this document"""
-        if not self.metadata['numbering']:
+        if not self.metadata["numbering"]:
             return (1, 0)
 
-        return self.metadata['numbering'].range()
+        return self.metadata["numbering"].range()
 
     def actual_range(self):
         """Get actual range"""
-        if not self.metadata['numbering'] or not self.entries:
+        if not self.metadata["numbering"] or not self.entries:
             return (1, 0)
 
         validator = TapDocumentValidator(self)
         enum = validator.enumeration()
         return (min(enum), max(enum))
 
-    def plan(self, comment=u'', skip=False):
+    def plan(self, comment="", skip=False):
         """Get plan for this document"""
-        options = {'comment': self.metadata['skip_comment'],
-                   'skip': self.metadata['skip']}
+        options = {
+            "comment": self.metadata["skip_comment"],
+            "skip": self.metadata["skip"],
+        }
         return self.create_plan(*self.range(), **options)
 
     def actual_plan(self):
         """Get actual plan for this document"""
-        options = {'comment': self.metadata['skip_comment'],
-                   'skip': self.metadata['skip']}
+        options = {
+            "comment": self.metadata["skip_comment"],
+            "skip": self.metadata["skip"],
+        }
         return self.create_plan(*self.actual_range(), **options)
 
     def count_not_ok(self):
@@ -566,7 +578,7 @@ class TapDocument(object):
         """Return the first bailout message of document or None"""
         for entry in self.entries:
             if entry.is_bailout:
-                return entry.message
+                return entry.msg
         return None
 
     def valid(self):
@@ -601,7 +613,7 @@ class TapDocument(object):
         try:
             num = int(num)
         except ValueError:
-            raise IndexError('Indexing requires testcase number')
+            raise IndexError("Indexing requires testcase number")
 
         validator = TapDocumentValidator(self)
         enum = validator.enumeration()
@@ -631,9 +643,9 @@ class TapDocument(object):
     def __getstate__(self):
         """Return state of this object"""
         state = copy.copy(self.metadata)
-        state['entries'] = [entry.__getstate__() for entry in self.entries]
-        if state['numbering']:
-            state['numbering'] = state['numbering'].__getstate__()
+        state["entries"] = [entry.__getstate__() for entry in self.entries]
+        if state["numbering"]:
+            state["numbering"] = state["numbering"].__getstate__()
         return state
 
     def __setstate__(self, state):
@@ -641,13 +653,13 @@ class TapDocument(object):
         self.entries = []
         self.metadata = {}
 
-        for key, value in state.iteritems():
-            if key == u'entries':
+        for key, value in state.items():
+            if key == "entries":
                 for entry in value:
                     tc = TapTestcase()
                     tc.__setstate__(entry)
                     self.entries.append(tc)
-            elif key == u'numbering':
+            elif key == "numbering":
                 if value is None:
                     self.metadata[key] = None
                 else:
@@ -656,11 +668,17 @@ class TapDocument(object):
             else:
                 self.metadata[key] = value
 
-        keys_exist = ['version', 'version_written', 'header_comment',
-                      'numbering', 'skip', 'skip_comment']
+        keys_exist = [
+            "version",
+            "version_written",
+            "header_comment",
+            "numbering",
+            "skip",
+            "skip_comment",
+        ]
         for key in keys_exist:
             if key not in self.metadata:
-                raise ValueError('Missing key {} in state'.format(key))
+                raise ValueError("Missing key {} in state".format(key))
 
     def copy(self):
         """Return a copy of this object"""
@@ -679,32 +697,30 @@ class TapDocument(object):
 
     def __str__(self):
         """String representation of TAP document"""
-        return unicode(self).encode(STR_ENC)
-
-    def __unicode__(self):
-        """Unicode representation of TAP document"""
-        out = u''
+        out = ""
         # version line
-        if self.metadata['version_written'] or \
-            self.metadata['version'] != self.DEFAULT_VERSION:
-            out += u'TAP version {:d}'.format(self.metadata['version'])
+        if (
+            self.metadata["version_written"]
+            or self.metadata["version"] != self.DEFAULT_VERSION
+        ):
+            out += "TAP version {:d}".format(self.metadata["version"])
             out += os.linesep
         # header comments
-        for comment in self.metadata['header_comment']:
-            out += unicode(comment)
+        for comment in self.metadata["header_comment"]:
+            out += str(comment)
         # [possibly] plan
-        if self.metadata['plan_at_beginning']:
+        if self.metadata["plan_at_beginning"]:
             out += self.plan() + os.linesep
         # testcases and bailouts
         for entry in self.entries:
-            out += unicode(entry)
+            out += str(entry)
         # [possibly] plan
-        out += self.plan() if not self.metadata['plan_at_beginning'] else u''
+        out += self.plan() if not self.metadata["plan_at_beginning"] else ""
 
         return out
 
 
-class TapDocumentValidator(object):
+class TapDocumentValidator:
     """TAP testcase numbering. In TAP documents it is called 'the plan'."""
 
     def __init__(self, doc, lenient=True):
@@ -716,7 +732,7 @@ class TapDocumentValidator(object):
         self.skip = doc.skip
         self.bailed = doc.bailed()
 
-        if not doc.metadata['numbering']:
+        if not doc.metadata["numbering"]:
             raise TapMissingPlan("Plan required before document validation")
 
         # retrieve numbers and range
@@ -749,8 +765,8 @@ class TapDocumentValidator(object):
 
         ## Is some given number used twice?
         ## Remark. Is tested by enumerate
-        #numbers = set()
-        #for index, nr in enumerate(self.numbers):
+        # numbers = set()
+        # for index, nr in enumerate(self.numbers):
         #    if nr is not None:
         #        if nr in numbers:
         #            msg = "Testcase number {} used twice at indices {} and {}"
@@ -780,7 +796,7 @@ class TapDocumentValidator(object):
         assigned = set()
         fixed = set()
         sequence = []
-        next_number = None
+        next_number = 1
 
         reuse_errmsg = "Testcase number {} was already used"
 
@@ -808,7 +824,7 @@ class TapDocumentValidator(object):
                     # replace "nr" with "next_number" in assigned and sequence
                     assigned.remove(nr)
                     fixed.add(next_number)
-                    sequence = [e == nr and next_number or e for e in sequence]
+                    sequence = [(next_number if e == nr else e) for e in sequence]
                     sequence.append(nr)
 
                     next_number += 1
@@ -830,7 +846,7 @@ class TapDocumentValidator(object):
         except ValueError:
             return False
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.valid()
 
     def enumeration(self, lenient=True):
@@ -850,8 +866,9 @@ class TapDocumentValidator(object):
         return iter(self.enumeration())
 
     def __repr__(self):
-        return '<TapDocumentValidator {} {}{}>'.format(self.numbers,
-            self.range, self.enum and ' with enumeration' or '')
+        return "<TapDocumentValidator {} {}{}>".format(
+            self.numbers, self.range, self.enum and " with enumeration" or ""
+        )
 
     def sanity_check(self, lenient=True):
         """Raise any errors which indicate that this document is wrong.
@@ -881,7 +898,7 @@ class TapDocumentValidator(object):
                 return False
 
 
-class TapDocumentIterator(object):
+class TapDocumentIterator:
     """Iterator over enumerated testcase entries of TAP document.
     Returns None for non-defined testcases.
     Raises Bailouts per default.
@@ -920,7 +937,7 @@ class TapDocumentIterator(object):
         if entries_index == -1:
             return None
 
-    def next(self):
+    def __next__(self):
         if self.skip:
             raise StopIteration("Document gets skipped")
         if self.current > self.end:
@@ -930,7 +947,7 @@ class TapDocumentIterator(object):
         return self.lookup(self.current - 1)
 
 
-class TapDocumentActualIterator(object):
+class TapDocumentActualIterator:
     """Iterator over actual *un*enumerated testcases. Raises Bailouts."""
 
     def __init__(self, doc, raise_bailout=True):
@@ -942,7 +959,7 @@ class TapDocumentActualIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.skip:
             raise StopIteration("Document gets skipped")
         if self.current >= len(self.entries):
@@ -956,7 +973,7 @@ class TapDocumentActualIterator(object):
                 raise entry
 
 
-class TapDocumentFailedIterator(object):
+class TapDocumentFailedIterator:
     """Iterate over all failed testcases; the ones that are 'not ok'.
     Numbers stay 'None'. Ignores Bailouts.
     """
@@ -968,7 +985,7 @@ class TapDocumentFailedIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.doc.skip:
             raise StopIteration("No entries available")
         while True:
@@ -981,35 +998,45 @@ class TapDocumentFailedIterator(object):
                     return copy.deepcopy(entry)
 
 
-class TapDocumentTokenizer(object):
+class TapDocumentTokenizer:
     """Lexer for TAP document."""
 
     # just for documentation
-    TOKENS = set(['VERSION_LINE', 'DATA', 'PLAN', 'TESTCASE', 'BAILOUT',
-                  'WARN_VERSION_LINE', 'WARN_PLAN', 'WARN_TESTCASE'])
+    TOKENS = set(
+        [
+            "VERSION_LINE",
+            "DATA",
+            "PLAN",
+            "TESTCASE",
+            "BAILOUT",
+            "WARN_VERSION_LINE",
+            "WARN_PLAN",
+            "WARN_TESTCASE",
+        ]
+    )
 
     # regexi to match lines
-    VERSION_REGEX = re.compile(r'TAP version (?P<version>\d+)\s*$', flags=re.I)
+    VERSION_REGEX = re.compile(r"TAP version (?P<version>\d+)\s*$", flags=re.I)
     PLAN_REGEX = re.compile(
-        r'(?P<first>\d+)\.\.(?P<last>\d+)\s*'
-        r'(?P<comment>#.*?)?$'
+        r"(?P<first>\d+)\.\.(?P<last>\d+)\s*" r"(?P<comment>#.*?)?$"
     )
-    TESTCASE_REGEX = re.compile((
-        r'(?P<field>(not )?ok)'
-        r'(\s+(?P<number>\d+))?'
-        r'(\s+(?P<description>[^\n]*?)'
-        r'(\s+#(?P<directive>(\s+(TODO|SKIP).*?)+?))?)?\s*$'),
-        flags=re.IGNORECASE
+    TESTCASE_REGEX = re.compile(
+        (
+            r"(?P<field>(not )?ok)"
+            r"(\s+(?P<number>\d+))?"
+            r"(\s+(?P<description>[^\n]*?)"
+            r"(\s+#(?P<directive>(\s+(TODO|SKIP).*?)+?))?)?\s*$"
+        ),
+        flags=re.IGNORECASE,
     )
     BAILOUT_REGEX = re.compile(
-        r'Bail out!(?P<comment>.*)',
-        flags=re.MULTILINE | re.IGNORECASE
+        r"Bail out!(?P<comment>.*)", flags=re.MULTILINE | re.IGNORECASE
     )
 
     # lookalike matches
-    VERSION_LOOKALIKE = 'tap version'
-    PLAN_LOOKALIKE = '1..'
-    TESTCASE_LOOKALIKE = ['not ok ', 'ok ']
+    VERSION_LOOKALIKE = "tap version"
+    PLAN_LOOKALIKE = "1.."
+    TESTCASE_LOOKALIKE = ["not ok ", "ok "]
 
     def __init__(self):
         self.pipeline = collections.deque()
@@ -1018,8 +1045,8 @@ class TapDocumentTokenizer(object):
     @classmethod
     def strip_comment(cls, cmt):
         if cmt is None:
-            return u''
-        return cmt.lstrip().lstrip('#-').lstrip().rstrip()
+            return ""
+        return cmt.lstrip().lstrip("#-").lstrip().rstrip()
 
     def parse_line(self, line):
         """Parse one line of a TAP file"""
@@ -1031,52 +1058,59 @@ class TapDocumentTokenizer(object):
         add = lambda *x: self.pipeline.append(x)
 
         if match1:
-            add('VERSION_LINE', int(match1.group('version')))
+            add("VERSION_LINE", int(match1.group("version")))
             self.last_indentation = None
         elif match2:
-            add('PLAN', (int(match2.group('first')), int(match2.group('last'))),
-                self.strip_comment(match2.group('comment')))
+            add(
+                "PLAN",
+                (int(match2.group("first")), int(match2.group("last"))),
+                self.strip_comment(match2.group("comment")),
+            )
             self.last_indentation = None
         elif match3:
-            number = match3.group('number')
+            number = match3.group("number")
             number = int(number) if number else None
-            add('TESTCASE', match3.group('field').lower() == 'ok',
-                number, self.strip_comment(match3.group('description')),
-                match3.group('directive'))
+            add(
+                "TESTCASE",
+                match3.group("field").lower() == "ok",
+                number,
+                self.strip_comment(match3.group("description")),
+                match3.group("directive"),
+            )
             self.last_indentation = 0
         elif match4:
-            add('BAILOUT', match4.group('comment').strip())
+            add("BAILOUT", match4.group("comment").strip())
             self.last_indentation = None
         else:
             sline = line.lower().strip()
             lookalike = 'Line "{}" looks like a {}, but does not match syntax'
 
             if sline.startswith(self.VERSION_LOOKALIKE):
-                add('WARN_VERSION_LINE', lookalike.format(sline, 'version line'))
+                add("WARN_VERSION_LINE", lookalike.format(sline, "version line"))
             elif sline.startswith(self.PLAN_LOOKALIKE):
-                add('WARN_PLAN', lookalike.format(sline, 'plan'))
+                add("WARN_PLAN", lookalike.format(sline, "plan"))
             elif sline.startswith(self.TESTCASE_LOOKALIKE[0]):
-                add('WARN_TESTCASE', lookalike.format(sline, 'test line'))
+                add("WARN_TESTCASE", lookalike.format(sline, "test line"))
             elif sline.startswith(self.TESTCASE_LOOKALIKE[1]):
-                add('WARN_TESTCASE', lookalike.format(sline, 'test line'))
+                add("WARN_TESTCASE", lookalike.format(sline, "test line"))
 
-            add('DATA', line)
+            add("DATA", line)
 
-    def from_file(self, filepath, encoding='utf-8'):
+    def from_file(self, filepath, encoding="utf-8"):
         """Read TAP file using `filepath` as source."""
         with codecs.open(filepath, encoding=encoding) as fp:
             for line in fp.readlines():
-                self.parse_line(line.rstrip('\n\r'))
+                self.parse_line(line.rstrip("\n\r"))
 
     def from_string(self, string):
         """Read TAP source code from the given `string`."""
         for line in string.splitlines():
-            self.parse_line(line.rstrip('\n\r'))
+            self.parse_line(line.rstrip("\n\r"))
 
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         try:
             while True:
                 return self.pipeline.popleft()
@@ -1084,7 +1118,7 @@ class TapDocumentTokenizer(object):
             raise StopIteration("All tokens consumed.")
 
 
-class TapDocumentParser(object):
+class TapDocumentParser:
     """Parser for TAP documents"""
 
     def __init__(self, tokenizer, lenient=True, logger=None):
@@ -1103,21 +1137,21 @@ class TapDocumentParser(object):
         """Give me some lines and I will parse it as data"""
         data = []
         yaml_mode = False
-        yaml_cache = u''
+        yaml_cache = ""
 
         for line in lines:
-            if line.strip() == '---':
+            if line.strip() == "---":
                 yaml_mode = True
-            elif line.strip() == '...':
+            elif line.strip() == "...":
                 data.append(YamlData(yamlish.load(yaml_cache)))
-                yaml_cache = u''
+                yaml_cache = ""
                 yaml_mode = False
             else:
                 if yaml_mode:
                     yaml_cache += line + os.linesep
                 else:
-                    line = line.rstrip('\r\n')
-                    if len(data) > 0 and isinstance(data[-1], basestring):
+                    line = line.rstrip("\r\n")
+                    if len(data) > 0 and isinstance(data[-1], str):
                         data[-1] += line + os.linesep
                     else:
                         data.append(line + os.linesep)
@@ -1126,7 +1160,7 @@ class TapDocumentParser(object):
     def warn(self, msg):
         """Raise a warning with text `msg`"""
         if self.lenient_parsing:
-            self.log.warn(msg)
+            self.log.warning(msg)
         else:
             raise TapParseError(msg)
 
@@ -1143,19 +1177,18 @@ class TapDocumentParser(object):
                     self.doc.entries[-1].data += self.parse_data(comment_cache)
                 else:
                     for line in self.parse_data(comment_cache):
-                        self.doc.metadata['header_comment'] += [line]
+                        self.doc.metadata["header_comment"] += [line]
                 comment_cache = []
             return comment_cache
 
         for tok in self.tokenizer:
-            if tok[0] == 'VERSION_LINE':
+            if tok[0] == "VERSION_LINE":
                 if state != 0:
-                    msg = ("Unexpected version line. "
-                           "Must only occur as first line.")
+                    msg = "Unexpected version line. " "Must only occur as first line."
                     raise TapParseError(msg)
                 self.doc.add_version_line(tok[1])
                 state = 1
-            elif tok[0] == 'PLAN':
+            elif tok[0] == "PLAN":
                 comment_cache = flush_cache(comment_cache)
                 if plan_written:
                     msg = "Plan must not occur twice in one document."
@@ -1166,7 +1199,7 @@ class TapDocumentParser(object):
                 self.doc.add_plan(tok[1][0], tok[1][1], tok[2], state <= 1)
                 state = 2
                 plan_written = True
-            elif tok[0] == 'TESTCASE':
+            elif tok[0] == "TESTCASE":
                 comment_cache = flush_cache(comment_cache)
 
                 tc = TapTestcase()
@@ -1177,15 +1210,15 @@ class TapDocumentParser(object):
 
                 self.doc.add_testcase(tc)
                 state = 2
-            elif tok[0] == 'BAILOUT':
+            elif tok[0] == "BAILOUT":
                 comment_cache = flush_cache(comment_cache)
 
                 self.doc.add_bailout(TapBailout(tok[1]))
                 state = 2
-            elif tok[0] == 'DATA':
+            elif tok[0] == "DATA":
                 comment_cache.append(tok[1])
                 state = 2
-            elif tok[0] in ['WARN_VERSION_LINE', 'WARN_PLAN', 'WARN_TESTCASE']:
+            elif tok[0] in ["WARN_VERSION_LINE", "WARN_PLAN", "WARN_TESTCASE"]:
                 self.warn(tok[1])
                 state = 2
             else:
@@ -1201,13 +1234,15 @@ class TapDocumentParser(object):
 
 
 class TapProtocol:
+    """The interface/protocol of a TAP implementation"""
+
     def __init__(self, version=TapDocument.DEFAULT_VERSION):
         return NotImplemented
 
-    def plan(self, first, last, skip=u''):
+    def plan(self, first, last, skip=""):
         raise NotImplementedError()
 
-    def testcase(self, ok, description=u'', skip=u'', todo=u''):
+    def testcase(self, ok, description="", skip="", todo=""):
         raise NotImplementedError()
 
     def bailout(self, comment):
@@ -1220,7 +1255,7 @@ class TapProtocol:
         return NotImplemented
 
 
-class TapWrapper(object, TapProtocol):
+class TapWrapper(TapProtocol):
     """One of the nice TAP APIs. See ``api`` module for others.
 
     Wraps a `TapDocument` and provides the nicer `TapProtocol` API.
@@ -1234,7 +1269,7 @@ class TapWrapper(object, TapProtocol):
         self.doc = doc or TapDocument(version)
         self._plan = None
 
-    def plan(self, first=None, last=None, skip=u'', tests=None):
+    def plan(self, first=None, last=None, skip="", tests=None):
         """Define how many tests are run. Either provide `first` & `last`
         or `tests` as integer attributes. `skip` is an optional message.
         If set, the test run was skipped because of the reason given by `skip`.
@@ -1265,7 +1300,7 @@ class TapWrapper(object, TapProtocol):
             self.doc.add_header_line(line)
         return self
 
-    def testcase(self, ok=True, description=u'', skip=False, todo=False):
+    def testcase(self, ok=True, description="", skip=False, todo=False):
         """Add a testcase entry to the TapDocument"""
         tc = TapTestcase()
         tc.field = ok
@@ -1278,12 +1313,12 @@ class TapWrapper(object, TapProtocol):
         self.doc.add_testcase(tc)
         return self
 
-    def ok(self, description=u'', skip=False, todo=False):
+    def ok(self, description="", skip=False, todo=False):
         """Add a succeeded testcase entry to the TapDocument"""
         self.testcase(True, description, skip, todo)
         return self
 
-    def not_ok(self, description=u'', skip=False, todo=False):
+    def not_ok(self, description="", skip=False, todo=False):
         """Add a failed testcase entry to the TapDocument"""
         self.testcase(False, description, skip, todo)
         return self
@@ -1293,7 +1328,7 @@ class TapWrapper(object, TapProtocol):
         self.finalize()
         return self.doc.copy()
 
-    def bailout(self, comment=u''):
+    def bailout(self, comment=""):
         """Trigger a bailout"""
         self.doc.add_bailout(comment)
         return self
@@ -1301,7 +1336,7 @@ class TapWrapper(object, TapProtocol):
     def out(self, stream=sys.stderr):
         """Write the document to stderr. Requires finalization."""
         self.finalize()
-        print(unicode(self.doc), file=stream)
+        print(str(self.doc), file=stream)
 
     def finalize(self):
         """Finalize document. Just checks whether plan has been written.
@@ -1310,15 +1345,13 @@ class TapWrapper(object, TapProtocol):
         """
         if not self._plan:
             raise TapMissingPlan("Cannot finalize document. Plan required.")
-        self.doc.add_plan(first=self._plan[0], last=self._plan[1],
-                          skip_comment=self._plan[2])
+        self.doc.add_plan(
+            first=self._plan[0], last=self._plan[1], skip_comment=self._plan[2]
+        )
         return self
 
     def __str__(self):
-        return unicode(self.doc).encode(STR_ENC)
-
-    def __unicode__(self):
-        return unicode(self.doc)
+        return str(self.doc)
 
 
 def merge(*docs):
@@ -1331,20 +1364,20 @@ def merge(*docs):
         return None
 
     doc = TapDocument()
-    doc.set_version(max([d.metadata['version'] for d in docs]))
+    doc.set_version(max([d.metadata["version"] for d in docs]))
 
     for d in docs:
-        if d.metadata['header_comment']:
-            comments = [c for c in d.metadata['header_comment'] if c.strip()]
-            doc.metadata['header_comment'] += comments
+        if d.metadata["header_comment"]:
+            comments = [c for c in d.metadata["header_comment"] if c.strip()]
+            doc.metadata["header_comment"] += comments
 
     # normalize ranges
     ranges, offset = [], 1
-    minimum, maximum, count = float('inf'), 0, 0
+    minimum, maximum, count = float("inf"), 0, 0
     for d in docs:
         r = list(d.range())
         r[1] = max(r[1], r[0] + len(d) - 1)
-        r = map(lambda x: x + offset - r[0], r)
+        r = [x + offset - r[0] for x in r]
         offset = r[1] + 1
         ranges.append(tuple(r))
 
@@ -1368,7 +1401,7 @@ def merge(*docs):
             maximum = max(maximum, max(enums))
         # assign numbers
         index = 0
-        for entry in doc.entries[-count_assignments or len(doc.entries):]:
+        for entry in doc.entries[-count_assignments or len(doc.entries) :]:
             if not entry.is_testcase:
                 continue
             number = enums[index]
@@ -1379,18 +1412,18 @@ def merge(*docs):
 
     skip_comments = []
     for d in docs:
-        if d.metadata['skip'] and d.metadata['skip_comment']:
-            skip_comments.append(d.metadata['skip_comment'])
+        if d.metadata["skip"] and d.metadata["skip_comment"]:
+            skip_comments.append(d.metadata["skip_comment"])
 
-    pab = any([d.metadata['plan_at_beginning'] for d in docs])
+    pab = any([d.metadata["plan_at_beginning"] for d in docs])
 
     if count == 0:
         minimum, maximum = 1, 0
-    elif minimum == float('inf'):
+    elif minimum == float("inf"):
         minimum, maximum = 1, count
     else:
         maximum = max(maximum, minimum + count - 1)
 
-    doc.add_plan(minimum, maximum, '; '.join(skip_comments), pab)
+    doc.add_plan(minimum, maximum, "; ".join(skip_comments), pab)
 
     return doc

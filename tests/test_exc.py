@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap import TapDocumentValidator, parse_string
-from taptaptap.exc import TapMissingPlan, TapInvalidNumbering
-from taptaptap.exc import TapBailout, TapParseError
+from taptaptap3 import TapDocumentValidator, parse_string
+from taptaptap3.exc import TapMissingPlan, TapInvalidNumbering
+from taptaptap3.exc import TapBailout, TapParseError
 
 import io
 import pickle
@@ -21,12 +21,13 @@ def validate_manually(doc):
 
 
 class TestExceptions(unittest.TestCase):
+
     def testParseError(self):
-        two_tcs1 = '1..1\nnot ok 1\nnot ok 1\n'
-        no_plan = 'not ok\n'
-        no_integer_version = 'TAP version 13h\n1..1\nok\n'
-        invalid_plan = '1..1b\nok\n'
-        negative_plan = '3..0\n '
+        two_tcs1 = "1..1\nnot ok 1\nnot ok 1\n"
+        no_plan = "not ok\n"
+        no_integer_version = "TAP version 13h\n1..1\nok\n"
+        invalid_plan = "1..1b\nok\n"
+        negative_plan = "3..0\n "
 
         # two_tcs1
         two_tcs1_doc = parse(two_tcs1, False)
@@ -51,23 +52,25 @@ class TestExceptions(unittest.TestCase):
 
     def testBailout(self):
         try:
-            raise TapBailout('Message')
+            raise TapBailout("Message")
             self.assertTrue(False)
         except TapBailout as e:
-            self.assertIn('Bail out!', str(e))
+            self.assertIn("Bail out!", str(e))
 
     def testPickle(self):
+
         def trypickle(obj):
             dump_file = io.BytesIO()
             pickle.dump(obj, dump_file)
             dump_file.seek(0)
             return pickle.load(dump_file)
 
-        bailout = TapBailout('Hello World')
-        bailout.data = ['Hi', 'ho']
+        bailout = TapBailout("Hello World")
+        bailout.data = ["Hi", "ho"]
         bailout = trypickle(bailout)
-        self.assertEquals(bailout.message, 'Hello World')
-        self.assertEquals(';'.join(bailout.data), 'Hi;ho')
+        self.assertEqual(bailout.msg, "Hello World")
+        self.assertEqual(";".join(bailout.data), "Hi;ho")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

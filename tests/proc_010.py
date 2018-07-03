@@ -1,15 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap.proc import plan, ok, out, bailout
+from taptaptap3.proc import plan, ok, out, bailout
 
 plan(first=1, last=2)
-ok('before')
-bailout('now')
-ok('after')
+ok("before")
+bailout("now")
+ok("after")
 
 out()
-
-
 
 
 ##     validity: -2

@@ -1,12 +1,14 @@
-import taptaptap
+import taptaptap3
 
-@taptaptap.SimpleTapCreator
+
+@taptaptap3.SimpleTapCreator
 def runTests():
     yield True
     yield True
     yield False
 
-print runTests()
+
+print((runTests()))
 
 ##     validity: -1
 ## ok testcases: 2 / 3

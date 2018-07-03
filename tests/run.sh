@@ -7,12 +7,11 @@
 #    [ ] use a program as source (any API)
 #      THEN
 #    [ ] check objects in RAM
-#    [ ] check output representation (__unicode__)
+#    [ ] check output representation (__str__)
 #    [ ] check metrics (validity status, number of ok/not-ok testcases, ...)
 #
 
 export PYTHONPATH=$PYTHONPATH":.."
-
 
 # check objects in RAM and exit code must be 0
 normal_test=('test_taptc.py' 'test_tapdoc.py' 'test_exc.py'
@@ -21,7 +20,7 @@ normal_test=('test_taptc.py' 'test_tapdoc.py' 'test_exc.py'
 for test in "${normal_test[@]}"
 do
   echo "[[     Run testsuite $test     ]]"
-  python "$test" || exit $?
+  python3 "$test" || exit $?
 done
 
 # source TAP files
@@ -34,7 +33,7 @@ examples=('000.tap' '001.tap' '002.tap' '003.tap' '004.tap' '005.tap'
 for test in "${examples[@]}"
 do
   echo "[[     Testing  $test     ]]"
-  python "./testlib.py" "../examples/$test" || exit $?
+  python3 "./testlib.py" "../examples/$test" || exit $?
 done
 
 
@@ -47,5 +46,5 @@ python_test=('proc_000.py' 'proc_001.py' 'proc_002.py' 'proc_003.py'
 for test in "${python_test[@]}"
 do
   echo "[[     Check output of  $test     ]]"
-  python "./testlib.py" "./$test" || exit $?
+  python3 "./testlib.py" "./$test" || exit $?
 done

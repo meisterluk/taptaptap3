@@ -1,39 +1,40 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap import TapDocument, TapTestcase, TapDocumentIterator
-from taptaptap import TapDocumentFailedIterator, TapDocumentActualIterator
-from taptaptap.exc import TapBailout
+from taptaptap3 import TapDocument, TapTestcase, TapDocumentIterator
+from taptaptap3 import TapDocumentFailedIterator, TapDocumentActualIterator
+from taptaptap3.exc import TapBailout
 
 import unittest
 
 
 class TestTapDocument(unittest.TestCase):
+
     def testEmptyDocument(self):
         doc = TapDocument()
         doc.add_plan(1, 0)
-        self.assertEquals(doc.version, 13)
-        self.assertEquals(doc.skip, False)
-        self.assertEquals(len(doc), 0)
-        self.assertEquals(unicode(doc), u'1..0\n')
+        self.assertEqual(doc.version, 13)
+        self.assertEqual(doc.skip, False)
+        self.assertEqual(len(doc), 0)
+        self.assertEqual(str(doc), "1..0\n")
 
     def testConstructor(self):
         doc = TapDocument(version=13)
-        self.assertEquals(doc.version, 13)
+        self.assertEqual(doc.version, 13)
 
         doc = TapDocument(skip=True)
         self.assertTrue(doc.skip)
 
         doc.add_plan(1, 1)
         doc.add_testcase(TapTestcase())
-        self.assertIn(u'skip', unicode(doc).lower())
+        self.assertIn("skip", str(doc).lower())
 
     def testSet(self):
         doc = TapDocument()
 
         doc.set_version(12)
-        self.assertEquals(doc.version, 12)
+        self.assertEqual(doc.version, 12)
 
-        doc.set_skip('this test expired')
+        doc.set_skip("this test expired")
         self.assertTrue(doc.skip)
         doc.set_skip(False)
         self.assertFalse(doc.skip)
@@ -41,41 +42,43 @@ class TestTapDocument(unittest.TestCase):
     def testAdd(self):
         doc = TapDocument()
 
-        doc.add_plan(1, 5, u'SKIP wip')
-        self.assertIn(u'wip', unicode(doc))
-        self.assertIn(u'1..5', unicode(doc))
+        doc.add_plan(1, 5, "SKIP wip")
+        self.assertIn("wip", str(doc))
+        self.assertIn("1..5", str(doc))
 
         tc = TapTestcase()
         tc.field = True
         tc.number = 1
-        tc.description = 'TC #1'
-        tc.data = [">>> int('88t')",
-                   "Traceback (most recent call last):",
-                   '  File "<stdin>", line 1, in <module>',
-                   "ValueError: invalid literal for int() with base 10: '88t'",
-                   {'locals': ['int']}]
+        tc.description = "TC #1"
+        tc.data = [
+            ">>> int('88t')",
+            "Traceback (most recent call last):",
+            '  File "<stdin>", line 1, in <module>',
+            "ValueError: invalid literal for int() with base 10: '88t'",
+            {"locals": ["int"]},
+        ]
 
         doc.add_testcase(tc)
-        self.assertIn(u'wip', unicode(doc))
-        self.assertIn(u'1..5', unicode(doc))
-        self.assertNotIn(u'...', unicode(doc))
-        self.assertIn(u'88t', unicode(doc))
-        self.assertIn(u'locals', unicode(doc))
+        self.assertIn("wip", str(doc))
+        self.assertIn("1..5", str(doc))
+        self.assertNotIn("...", str(doc))
+        self.assertIn("88t", str(doc))
+        self.assertIn("locals", str(doc))
 
-        doc.add_bailout(TapBailout('Filesystem crashed'))
-        self.assertIn(u'Bail out! Filesystem crashed', unicode(doc))
+        doc.add_bailout(TapBailout("Filesystem crashed"))
+        self.assertIn("Bail out! Filesystem crashed", str(doc))
 
     def testAddHeaderLine(self):
         doc = TapDocument()
         doc.add_plan(1, 0)
 
         doc.add_version_line(12)
-        self.assertEquals(doc.version, 12)
+        self.assertEqual(doc.version, 12)
 
-        doc.add_header_line('Hello World')
-        doc.add_header_line('Embrace!')
-        self.assertIn(u'Hello World', unicode(doc))
-        self.assertIn(u'Embrace!', unicode(doc))
+        doc.add_header_line("Hello World")
+        doc.add_header_line("Embrace!")
+        self.assertIn("Hello World", str(doc))
+        self.assertIn("Embrace!", str(doc))
 
     def testLength(self):
         doc = TapDocument()
@@ -83,34 +86,34 @@ class TestTapDocument(unittest.TestCase):
 
         doc.add_testcase(TapTestcase())
         doc.add_testcase(TapTestcase())
-        doc.add_bailout(TapBailout('FS problem'))
+        doc.add_bailout(TapBailout("FS problem"))
 
-        self.assertEquals(len(doc), 5)
-        self.assertEquals(doc.actual_length(), 2)
+        self.assertEqual(len(doc), 5)
+        self.assertEqual(doc.actual_length(), 2)
 
     def testRangeAndPlan(self):
         doc = TapDocument()
 
-        self.assertEquals(doc.range(), (1, 0))
-        self.assertEquals(doc.actual_range(), (1, 0))
-        self.assertEquals(doc.plan(), '1..0')
-        self.assertEquals(doc.actual_plan(), '1..0')
+        self.assertEqual(doc.range(), (1, 0))
+        self.assertEqual(doc.actual_range(), (1, 0))
+        self.assertEqual(doc.plan(), "1..0")
+        self.assertEqual(doc.actual_plan(), "1..0")
 
         doc.add_plan(3, 7)
 
-        self.assertEquals(doc.range(), (3, 7))
-        self.assertEquals(doc.actual_range(), (1, 0))
-        self.assertEquals(doc.plan(), '3..7')
-        self.assertEquals(doc.actual_plan(), '1..0')
+        self.assertEqual(doc.range(), (3, 7))
+        self.assertEqual(doc.actual_range(), (1, 0))
+        self.assertEqual(doc.plan(), "3..7")
+        self.assertEqual(doc.actual_plan(), "1..0")
 
         doc.add_testcase(TapTestcase())
         doc.add_testcase(TapTestcase())
-        doc.add_bailout(TapBailout('FS problem'))
+        doc.add_bailout(TapBailout("FS problem"))
 
-        self.assertEquals(doc.range(), (3, 7))
-        self.assertEquals(doc.actual_range(), (3, 4))
-        self.assertEquals(doc.plan(), '3..7')
-        self.assertEquals(doc.actual_plan(), '3..4')
+        self.assertEqual(doc.range(), (3, 7))
+        self.assertEqual(doc.actual_range(), (3, 4))
+        self.assertEqual(doc.plan(), "3..7")
+        self.assertEqual(doc.actual_plan(), "3..4")
 
     def testIn(self):
         doc = TapDocument()
@@ -168,16 +171,16 @@ class TestTapDocument(unittest.TestCase):
         doc.add_testcase(tc2)
         doc.add_testcase(tc3)
         doc.add_testcase(tc4)
-        doc.add_bailout(TapBailout('raising bailout'))
+        doc.add_bailout(TapBailout("raising bailout"))
         doc.add_testcase(tc5)
 
-        self.assertEquals(doc[1], tc1)
-        self.assertEquals(doc[2], tc2)
-        self.assertEquals(doc[3], tc4)
-        self.assertEquals(doc[4], tc3)
-        self.assertEquals(doc[5], tc5)
-        self.assertEquals(doc[6], None)
-        self.assertEquals(doc[10], None)
+        self.assertEqual(doc[1], tc1)
+        self.assertEqual(doc[2], tc2)
+        self.assertEqual(doc[3], tc4)
+        self.assertEqual(doc[4], tc3)
+        self.assertEqual(doc[5], tc5)
+        self.assertEqual(doc[6], None)
+        self.assertEqual(doc[10], None)
 
         self.assertRaises(IndexError, lambda: doc[0])
         self.assertRaises(IndexError, lambda: doc[11])
@@ -206,9 +209,9 @@ class TestTapDocument(unittest.TestCase):
         tc4.field = True
         doc.add_testcase(tc4)
 
-        self.assertEquals(doc.count_not_ok(), 2)
-        self.assertEquals(doc.count_todo(), 3)
-        self.assertEquals(doc.count_skip(), 1)
+        self.assertEqual(doc.count_not_ok(), 2)
+        self.assertEqual(doc.count_todo(), 3)
+        self.assertEqual(doc.count_skip(), 1)
 
     def testBailout(self):
         doc = TapDocument()
@@ -217,13 +220,13 @@ class TestTapDocument(unittest.TestCase):
         doc.add_testcase(TapTestcase())
         self.assertFalse(doc.bailed())
 
-        doc.add_bailout(TapBailout('FS crash'))
+        doc.add_bailout(TapBailout("FS crash"))
         self.assertTrue(doc.bailed())
 
-        doc.add_bailout(TapBailout('Another crash'))
+        doc.add_bailout(TapBailout("Another crash"))
         self.assertTrue(doc.bailed())
 
-        self.assertEquals(doc.bailout_message(), 'FS crash')
+        self.assertEqual(doc.bailout_message(), "FS crash")
 
     def testValid(self):
         # valid iff
@@ -240,8 +243,8 @@ class TestTapDocument(unittest.TestCase):
 
         # bailout
         # must work without a plan
-        doc.set_skip('Hello World')
-        doc.add_bailout(TapBailout('filesystem problem'))
+        doc.set_skip("Hello World")
+        doc.add_bailout(TapBailout("filesystem problem"))
         self.assertFalse(doc.valid())
 
         # skipped
@@ -278,7 +281,7 @@ class TestTapDocument(unittest.TestCase):
         # all tcs are skipped
         tc = TapTestcase()
         tc.field = False
-        tc.skip = u'Only testable in enterprise environment'
+        tc.skip = "Only testable in enterprise environment"
         doc = TapDocument()
         doc.set_skip(False)
         doc.add_testcase(tc)
@@ -289,13 +292,14 @@ class TestTapDocument(unittest.TestCase):
         doc.add_plan(1, 5)
         self.assertTrue(doc.valid())
 
-        doc.add_bailout(TapBailout('System crashed'))
+        doc.add_bailout(TapBailout("System crashed"))
         self.assertFalse(doc.valid())
 
 
 class TestTapDocumentIterator(unittest.TestCase):
+
     def testIterWithoutBailout(self):
-        description = ['a', 'b', 'c', 'd']
+        description = ["a", "b", "c", "d"]
         doc = TapDocument()
         tc = TapTestcase()
         doc.add_plan(1, 20)
@@ -306,22 +310,22 @@ class TestTapDocumentIterator(unittest.TestCase):
         iterations = 0
         for d, tc in enumerate(iter(doc)):
             if d < 4:
-                self.assertEquals(tc.description, description[d])
+                self.assertEqual(tc.description, description[d])
             else:
                 self.assertIsNone(tc)
             iterations += 1
 
         for d, tc in enumerate(TapDocumentIterator(doc)):
             if d < 4:
-                self.assertEquals(tc.description, description[d])
+                self.assertEqual(tc.description, description[d])
             else:
                 self.assertIsNone(tc)
             iterations += 1
 
-        self.assertEquals(iterations, 40)
+        self.assertEqual(iterations, 40)
 
     def testIter(self):
-        description = ['a', 'b', 'c', 'd']
+        description = ["a", "b", "c", "d"]
         doc = TapDocument()
         tc = TapTestcase()
         doc.add_plan(1, 20)
@@ -334,24 +338,25 @@ class TestTapDocumentIterator(unittest.TestCase):
         iterations = 0
         try:
             for d, tc in enumerate(iter(doc)):
-                self.assertEquals(tc.description, description[d])
+                self.assertEqual(tc.description, description[d])
                 iterations += 1
         except TapBailout:
             pass
 
         try:
             for d, tc in enumerate(TapDocumentIterator(doc)):
-                self.assertEquals(tc.description, description[d])
+                self.assertEqual(tc.description, description[d])
                 iterations += 1
         except TapBailout:
             pass
 
-        self.assertEquals(iterations, 6)
+        self.assertEqual(iterations, 6)
 
 
 class TestTapDocumentActualIterator(unittest.TestCase):
+
     def testIter(self):
-        description = ['a', 'b', 'c', 'd']
+        description = ["a", "b", "c", "d"]
         doc = TapDocument()
         tc = TapTestcase()
         doc.add_plan(1, 20)
@@ -360,22 +365,22 @@ class TestTapDocumentActualIterator(unittest.TestCase):
             tc.description = description[d]
             doc.add_testcase(tc)
             if d == 2:
-                doc.add_bailout(TapBailout('failure'))
+                doc.add_bailout(TapBailout("failure"))
 
         def iterate(doc):
             iterations = 0
             try:
                 for d, tc in enumerate(TapDocumentActualIterator(doc)):
-                    self.assertEquals(tc.description, description[d])
+                    self.assertEqual(tc.description, description[d])
                     iterations += 1
             except TapBailout:
                 return iterations
             return iterations
 
-        self.assertEquals(iterate(doc), 3)
+        self.assertEqual(iterate(doc), 3)
 
     def testIterWithoutBailout(self):
-        description = ['a', 'b', 'c', 'd']
+        description = ["a", "b", "c", "d"]
         doc = TapDocument()
         tc = TapTestcase()
         doc.add_plan(1, 20)
@@ -386,29 +391,30 @@ class TestTapDocumentActualIterator(unittest.TestCase):
 
         iterations = 0
         for d, tc in enumerate(TapDocumentActualIterator(doc)):
-            self.assertEquals(tc.description, description[d])
+            self.assertEqual(tc.description, description[d])
             iterations += 1
 
-        self.assertEquals(iterations, 4)
+        self.assertEqual(iterations, 4)
 
 
 class TestTapDocumentFailedIterator(unittest.TestCase):
+
     def testIter(self):
         doc = TapDocument()
         doc.add_plan(1, 25)
 
         for i in range(20):
             tc = TapTestcase()
-            tc.field = (i % 2 == 1)
+            tc.field = i % 2 == 1
             doc.add_testcase(tc)
             if i == 15:
-                doc.add_bailout(TapBailout('fail'))
+                doc.add_bailout(TapBailout("fail"))
 
         iterations = 0
         for d, tc in enumerate(TapDocumentFailedIterator(doc)):
             self.assertFalse(tc.field)
             iterations += 1
-        self.assertEquals(iterations, 10)
+        self.assertEqual(iterations, 10)
 
 
 class TestTapParsing(unittest.TestCase):
@@ -416,15 +422,17 @@ class TestTapParsing(unittest.TestCase):
 
 
 class TestTapContextManager(unittest.TestCase):
+
     def testWrapper(self):
         with TapDocument() as tap:
             tap.plan(1, 4)
             tap.ok("a fine testcase").not_ok("a failed testcase")
             doc = tap.unwrap()
 
-        self.assertEquals(doc.plan(), '1..4')
-        self.assertIn(u'fine testcase', unicode(doc))
-        self.assertIn(u'failed testcase', unicode(doc))
+        self.assertEqual(doc.plan(), "1..4")
+        self.assertIn("fine testcase", str(doc))
+        self.assertIn("failed testcase", str(doc))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

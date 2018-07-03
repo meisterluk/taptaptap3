@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from taptaptap.proc import plan, ok, out
+from taptaptap3.proc import plan, ok, out
 
 plan(tests=1)
-ok('Proving it right')
+ok("Proving it right")
 
 out()
-
 
 
 ##     validity: 0
