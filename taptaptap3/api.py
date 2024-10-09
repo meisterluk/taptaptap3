@@ -12,6 +12,7 @@
 
 import sys
 import time
+import typing
 import unittest
 
 from .impl import TapTestcase, TapDocument, TapDocumentIterator, TapWrapper
@@ -34,7 +35,7 @@ __all__ = [
 # Nice-to-use functions for TapDocument creation
 
 
-def parse_string(string, lenient=True):
+def parse_string(string: str, lenient: bool=True) -> typing.Optional[TapDocument]:
     """Parse the given `string` and return its TapDocument instance.
 
     :param str string:          A string to parse
@@ -47,7 +48,7 @@ def parse_string(string, lenient=True):
     return parser.document
 
 
-def parse_file(filepath, lenient=True):
+def parse_file(filepath: str, lenient: bool=True) -> typing.Optional[TapDocument]:
     """Parse a TAP file and return its TapDocument instance.
 
     :param str filepath:        A valid filepath for `open`
@@ -60,13 +61,13 @@ def parse_file(filepath, lenient=True):
     return parser.document
 
 
-def validate(doc):
+def validate(doc: TapDocument) -> bool:
     """Does TapDocument `doc` represent a successful test run?"""
     validator = TapDocumentValidator(doc)
     return validator.valid()
 
 
-def harness(doc):
+def harness(doc: TapDocument) -> str:
     """Return a representation of `doc` like perl's Test.Harness.
     See http://search.cpan.org/dist/JS-Test-Simple/lib/JS/Test/Harness.pod#Failure
     Be aware that the example output shows a summary for a *set* of TAP files.
@@ -116,6 +117,8 @@ def harness(doc):
             " ".join(map(str, failed)),
         )
 
+    return out
+
 
 class TapWriter:
     """A small API to write TAP output. It features almost the same
@@ -123,11 +126,14 @@ class TapWriter:
     """
 
     def __init__(self):
-        self._plan, self.skip = None, None
-        self.entries, self.comments = [], []
-        self.version = None
+        self._plan: typing.Optional[typing.Tuple[int, int]] = None
+        self.skip: typing.Optional[str] = None
+        self.entries: typing.List[typing.Union[TapTestcase, TapBailout]] = []
+        self.comments: typing.List[typing.Optional[str]] = []
+        self.version: typing.Optional[int] = None
+        self._doc: typing.Optional[TapDocument] = None
 
-    def plan(self, first=None, last=None, skip="", tests=None, tapversion=None):
+    def plan(self, first: typing.Optional[int]=None, last: typing.Optional[int]=None, skip: str="", tests: typing.Optional[int]=None, tapversion: typing.Optional[int]=None) -> 'TapWriter':
         """Define plan. Provide integers `first` and `last` XOR `tests`.
         `skip` is a non-empty message if the whole testsuite was skipped.
         """
@@ -136,14 +142,14 @@ class TapWriter:
         elif tests is not None:
             self._plan = (1, int(tests))
         else:
-            self._plan = (first, last)
+            self._plan = (first, last) if (first is not None and last is not None) else None
 
         self.skip = skip
         self.version = tapversion
 
         return self
 
-    def testcase(self, ok=True, description="", skip="", todo=""):
+    def testcase(self, ok: bool=True, description: str="", skip: str="", todo: str="") -> 'TapWriter':
         """Add a testcase entry to the TapDocument"""
         tc = TapTestcase()
         tc.field = ok
@@ -157,15 +163,15 @@ class TapWriter:
         self.comments.append(None)
         return self
 
-    def ok(self, description="", skip=False, todo=False):
+    def ok(self, description: str="", skip: str="", todo: str="") -> 'TapWriter':
         """Add a succeeded testcase entry to the TapDocument"""
         return self.testcase(True, description, skip, todo)
 
-    def not_ok(self, description="", skip=False, todo=False):
+    def not_ok(self, description: str="", skip: str="", todo: str="") -> 'TapWriter':
         """Add a failed testcase entry to the TapDocument"""
         return self.testcase(False, description, skip, todo)
 
-    def bailout(self, comment, data=None):
+    def bailout(self, comment: str, data: typing.Optional[typing.List[str]]=None) -> 'TapWriter':
         """Add Bailout to document"""
         bailout = TapBailout(comment)
         if data:
@@ -173,18 +179,18 @@ class TapWriter:
         self.entries.append(bailout)
         return self
 
-    def write(self, line):
+    def write(self, line: str) -> 'TapWriter':
         """Add a comment at the current position"""
         self.comments.append(line)
         return self
 
-    def finalize(self):
+    def finalize(self) -> 'TapWriter':
         """Finalize this TapDocument"""
         doc = TapDocument()
         if self.version:
             doc.add_version_line(self.version)
         if self._plan:
-            doc.add_plan(self._plan[0], self._plan[1], self.skip)
+            doc.add_plan(self._plan[0], self._plan[1], self.skip or "")
 
         cmt_iter = iter(self.comments)
 
@@ -214,12 +220,12 @@ class TapWriter:
         return self
 
     @property
-    def doc(self):
+    def doc(self) -> TapDocument:
         """Returns the current TapDocument"""
         self.finalize()
         return self._doc
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.doc)
 
 

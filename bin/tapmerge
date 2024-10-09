@@ -9,7 +9,7 @@ import taptaptap3
 import argparse
 
 
-def read_stdin():
+def read_stdin() -> typing.Optional[TapDocument]:
     """Read and parse string from stdin"""
     content = u""
     encoding = sys.stdin.encoding or sys.getdefaultencoding()
@@ -18,7 +18,7 @@ def read_stdin():
     return taptaptap3.parse_string(content)
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     if len(args.files) <= 1:
         raise ValueError("You must at least specify two TAP files")
 

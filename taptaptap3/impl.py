@@ -33,9 +33,10 @@ import re
 import os
 import sys
 import copy
+import yaml
 import codecs
 import logging
-import yamlish
+import typing
 import collections
 
 __all__ = [
@@ -59,45 +60,45 @@ __all__ = [
 class YamlData:
     """YAML data storage"""
 
-    def __init__(self, data):
+    def __init__(self, data: dict):
         self.data = data
 
-    def __eq__(self, other):
-        return self.data == other
+    def __eq__(self, other) -> bool:
+        return self.data == other.data
 
     def __iter__(self):
         return iter(self.data)
 
-    def __str__(self):
-        return yamlish.dumps(self.data)
+    def __str__(self) -> str:
+        return yaml.safe_dump(self.data)
 
 
 class TapTestcase:
     """Object representation of an entry in a TAP file"""
-    is_testcase = True
-    is_bailout = False
+    is_testcase: bool = True
+    is_bailout: bool = False
 
-    def __init__(self, field=None, number=None, description=""):
+    def __init__(self, field: typing.Optional[bool]=None, number: typing.Optional[int]=None, description: str=""):
         # test line
-        self._field = field
-        self._number = number
-        self.description = description
-        self._directives = {"skip": [], "todo": []}
+        self._field: typing.Optional[bool] = field
+        self._number: typing.Optional[int] = number
+        self.description: str = description
+        self._directives: typing.MutableMapping[str, typing.List[str]] = {"skip": [], "todo": []}
         # data
-        self._data = []
+        self._data: typing.List[str] = []
 
     @staticmethod
-    def indent(text, indent=2):
+    def indent(text: str, indent: int=2) -> str:
         """Indent all lines of ``text`` by ``indent`` spaces"""
         return re.sub("(^|\n)(?!\n|$)", "\\1" + (" " * indent), text)
 
     @property
-    def field(self):
+    def field(self) -> typing.Optional[bool]:
         """A TAP field specifying whether testcase succeeded"""
         return self._field
 
     @field.setter
-    def field(self, value):
+    def field(self, value: typing.Optional[typing.Union[bool, str]]) -> None:
         errmsg = "field value must be 'ok' or 'not ok', not {!r}".format(value)
         try:
             if value in [None, True, False]:
@@ -116,12 +117,12 @@ class TapTestcase:
         self._field = None
 
     @property
-    def number(self):
+    def number(self) -> typing.Optional[int]:
         """A TAP testcase number"""
         return self._number
 
     @number.setter
-    def number(self, value):
+    def number(self, value: typing.Optional[int]) -> None:
         if value is None:
             self._number = value
             return
@@ -134,11 +135,11 @@ class TapTestcase:
         self._number = value
 
     @number.deleter
-    def number(self):
+    def number(self) -> None:
         self._number = None
 
     @property
-    def directive(self):
+    def directive(self) -> str:
         """A TAP directive like 'TODO work in progress'"""
         out = ""
         for skip_msg in self._directives["skip"]:
@@ -148,7 +149,7 @@ class TapTestcase:
         return out and out[:-1] or ""
 
     @directive.setter
-    def directive(self, value):
+    def directive(self, value: str) -> None:
         # reset
         self._directives["skip"] = []
         self._directives["todo"] = []
@@ -158,8 +159,8 @@ class TapTestcase:
 
         delimiters = ["skip", "todo"]
         value = value.lstrip("#\t ")
-        parts = re.split("(" + "|".join(delimiters) + ")", value, flags=re.I)
-        parts = [p for p in parts if p]
+        fields = re.split("(" + "|".join(delimiters) + ")", value, flags=re.I)
+        parts: typing.List[str] = list(filter(bool, fields))
 
         if not parts or parts[0].lower() not in delimiters:
             raise ValueError("Directive must start with SKIP or TODO")
@@ -170,7 +171,7 @@ class TapTestcase:
             if val.lower() in delimiters:
                 key = val.lower()
                 if key_just_set:
-                    self._directives[key] = ""
+                    self._directives[key] = []
                 key_just_set = True
             else:
                 if key is None:
@@ -180,75 +181,83 @@ class TapTestcase:
                 key_just_set = False
 
     @directive.deleter
-    def directive(self):
+    def directive(self) -> None:
         self._directives = {}
 
     @property
-    def data(self):
+    def data(self) -> typing.List[str]:
         """Annotated data (eg. a backtrace) to the testcase"""
         return self._data
 
     @data.setter
-    def data(self, value):
-        msg = "If you set data explicitly, it has to be a list"
-        assert hasattr(value, "__iter__"), msg
+    def data(self, value: typing.List[str]) -> None:
+        assert hasattr(value, "__iter__"), "If you set data explicitly, it has to be a list"
 
         self._data = copy.deepcopy(value)
 
     @data.deleter
-    def data(self):
+    def data(self) -> None:
         self._data = []
 
     @property
-    def todo(self):
+    def todo(self) -> bool:
         """Is a TODO flag annotated to this testcase?"""
         return bool(self._directives["todo"])
 
     @todo.setter
-    def todo(self, what):
+    def todo(self, what: str) -> None:
         """Add a TODO flag to this testcase.
 
         :param str what:    Which work is still left?
         """
-        self._directives["todo"].append(what) if what else None
+        if what:
+            self._directives["todo"].append(what)
 
     @property
-    def skip(self):
+    def skip(self) -> bool:
         """Is a SKIP flag annotated to this testcase?"""
         return bool(self._directives["skip"])
 
     @skip.setter
-    def skip(self, why):
+    def skip(self, why: str) -> None:
         """Add a SKIP flag to this testcase.
 
         :param str why:    Why shall this testcase be skipped?
         """
-        self._directives["skip"].append(why) if why else None
+        if why:
+            self._directives["skip"].append(why)
 
-    def copy(self):
+    def copy(self) -> TapTestcase:
         """Return a copy of myself"""
         tc = TapTestcase()
         tc.__setstate__(self.__getstate__())
         return tc
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Test equality"""
-        conds = [
-            self.field == other.field,
-            self.number == other.number,
-            self.description == other.description,
-            self.directive == other.directive,
-            self.data == self.data,
-        ]
+        members = {'field', 'number', 'description', 'directive', 'data'}
 
-        # if one number is None and the other not, it's fine
-        is_none = [self.number is None, other.number is None]
-        if is_none.count(True) == 1:
-            conds[1] = True
+        # verify member existence
+        for member in members:
+            if not hasattr(other, member):
+                return False
 
-        return all(conds)
+        # verify equality
+        for member in members:
+            # 'number': if one number is None and the other is not, it's fine
+            if member == 'number':
+                result = ((self.number is None and other.number is not None) or
+                          (self.number is not None and other.number is None) or
+                          self.number == other.number)
+                if not result:
+                    return False
+            else:
+                if getattr(self, member) != getattr(other, member):
+                    return False
 
-    def __getstate__(self):
+        return True
+
+    def __getstate__(self) -> typing.Dict[str, typing.Any]:
         """Return object state for external storage"""
         return {
             "field": self.field,
@@ -258,7 +267,7 @@ class TapTestcase:
             "data": self.data,
         }
 
-    def __setstate__(self, obj):
+    def __setstate__(self, obj: typing.Dict[str, typing.Any]) -> None:
         """Import data using the provided object"""
         self.field = obj["field"]
         self.number = obj["number"]
@@ -266,7 +275,7 @@ class TapTestcase:
         self._directives = obj["directives"]
         self.data = obj["data"]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of this object"""
         field = "ok" if self.field else "not ok"
         num = "" if self.number is None else " #{}".format(self._number)
@@ -281,7 +290,7 @@ class TapTestcase:
 
         return "<TapTestcase {}{}{}>".format(field, num, todo_skip)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """TAP testcase representation as a string object"""
         num, desc, directive = self.number, self.description, self.directive
 
@@ -306,7 +315,7 @@ class TapTestcase:
 class TapNumbering:
     """TAP testcase numbering. In TAP documents it is called 'the plan'."""
 
-    def __init__(self, first=None, last=None, tests=None, lenient=True):
+    def __init__(self, first: typing.Optional[int]=None, last: typing.Optional[int]=None, tests: typing.Optional[int]=None, lenient: bool=True):
         """Constructor. Provide `first` and `last` XOR a number of `tests`.
 
         `first` and `last` are testcase numbers. Both inclusive.
@@ -320,8 +329,8 @@ class TapNumbering:
             raise ValueError(arg_errmsg)
 
         if first is not None and last is not None:
-            self.first = int(first)
-            self.length = int(last) - int(first) + 1
+            self.first: int = int(first)
+            self.length: int = int(last) - int(first) + 1
 
             if int(last) == 0 and int(first) == 1:
                 self.length = 0
@@ -341,49 +350,49 @@ class TapNumbering:
 
         assert self.first >= 0 and self.length >= 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.length
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return True
 
-    def __contains__(self, tc_number):
+    def __contains__(self, tc_number: int) -> bool:
         """Is `tc_number` within this TapNumbering range?"""
         return self.first <= tc_number and tc_number < self.first + self.length
 
-    def enumeration(self):
+    def enumeration(self) -> typing.List[int]:
         """Get enumeration for the actual tap plan."""
         return list(range(self.first, self.first + self.length))
 
-    def inc(self):
+    def inc(self) -> None:
         """Increase numbering for one new testcase"""
         self.length += 1
 
-    def normalized_plan(self):
+    def normalized_plan(self) -> str:
         """Return a normalized plan where first=1"""
         return "{:d}..{:d}".format(1, self.length)
 
-    def range(self):
+    def range(self) -> typing.Tuple[int, int]:
         """Get range of this numbering: (min, max)"""
         return (self.first, self.first + self.length - 1)
 
-    def __getstate__(self):
+    def __getstate__(self) -> typing.Dict[str, typing.Any]:
         return {"first": self.first, "length": self.length}
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: typing.Dict[str, typing.Any]) -> None:
         self.first = state["first"]
         self.length = state["length"]
 
     def __iter__(self):
         return iter(range(self.first, self.first + self.length))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation of plan.
         If it was initially a decreasing range, first=last now.
         """
         return "{:d}..{:d}".format(self.first, self.first + self.length - 1)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<TapNumbering {}>".format((self.first, self.length))
 
 
@@ -394,12 +403,12 @@ class TapActualNumbering(list):
 
 class TapDocument:
     """An object representing a TAP document. Also acts as context manager."""
-    DEFAULT_VERSION = 13
+    DEFAULT_VERSION: int = 13
 
-    def __init__(self, version=DEFAULT_VERSION, skip=False):
+    def __init__(self, version: int=DEFAULT_VERSION, skip: bool=False):
         # testcases and bailouts
-        self.entries = []
-        self.metadata = {
+        self.entries: typing.List[typing.Union[TapTestcase, TapBailout]] = []
+        self.metadata: typing.Dict[str, typing.Any] = {
             # version line
             "version": version,
             "version_written": False,
@@ -412,26 +421,26 @@ class TapDocument:
             "skip_comment": "",
         }
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return True
 
     @property
-    def version(self):
+    def version(self) -> int:
         """Get TAP version for this document"""
         return self.metadata["version"]
 
     @property
-    def skip(self):
+    def skip(self) -> bool:
         """Was this document skipped in the test run?"""
         return self.metadata["skip"]
 
     # set information
 
-    def set_version(self, version=DEFAULT_VERSION):
+    def set_version(self, version: int=DEFAULT_VERSION) -> None:
         """Set TAP version of this document"""
         self.metadata["version"] = int(version)
 
-    def set_skip(self, skip_comment=""):
+    def set_skip(self, skip_comment: str="") -> None:
         """Set skip annotation for this document"""
         if skip_comment:
             self.metadata["skip"] = True
@@ -439,37 +448,37 @@ class TapDocument:
         else:
             self.metadata["skip"] = False
 
-    def add_version_line(self, version=DEFAULT_VERSION):
+    def add_version_line(self, version: int=DEFAULT_VERSION) -> None:
         """Add information of version lines like 'TAP version 13'"""
         self.set_version(version)
         self.metadata["version_written"] = True
 
-    def add_header_line(self, line):
+    def add_header_line(self, line: str) -> None:
         """Add header comment line for TAP document"""
         if line.count(os.linesep) > 1:
             raise ValueError("Header line must only be 1 (!) line")
         line = str(line).rstrip() + os.linesep
         self.metadata["header_comment"] += [line]
 
-    def add_plan(self, first, last, skip_comment="", at_beginning=True):
+    def add_plan(self, first: int, last: int, skip_comment: str="", at_beginning: bool=True) -> None:
         """Add information of a plan like '1..3 # SKIP wip'"""
         self.metadata["plan_at_beginning"] = bool(at_beginning)
         self.metadata["numbering"] = TapNumbering(first=first, last=last)
         if skip_comment:
             self.set_skip(skip_comment)
 
-    def add_testcase(self, tc):
+    def add_testcase(self, tc: TapTestcase) -> None:
         """Add a ``TapTestcase`` instance `tc` to this document"""
         self.entries.append(tc.copy())
 
-    def add_bailout(self, bo):
+    def add_bailout(self, bo: TapBailout) -> None:
         """Add a ``TapBailout`` instance `bo` to this document"""
         self.entries.append(bo.copy())
 
     # processing
 
     @staticmethod
-    def create_plan(first, last, comment="", skip=False):
+    def create_plan(first: int, last: int, comment: str="", skip: bool=False) -> str:
         plan = "{:d}..{:d}".format(first, last)
 
         if os.linesep in comment:
@@ -489,13 +498,13 @@ class TapDocument:
 
     # retrieve information
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return number of testcases in this document"""
         if self.metadata["numbering"]:
             return len(self.metadata["numbering"])
         return self.actual_length()
 
-    def actual_length(self):
+    def actual_length(self) -> int:
         """Return actual number of testcases in this document"""
         count = 0
         for entry in self.entries:
@@ -503,14 +512,14 @@ class TapDocument:
                 count += 1
         return count
 
-    def range(self):
+    def range(self) -> typing.Tuple[int, int]:
         """Get range like ``(1, 2)`` for this document"""
         if not self.metadata["numbering"]:
             return (1, 0)
 
         return self.metadata["numbering"].range()
 
-    def actual_range(self):
+    def actual_range(self) -> typing.Tuple[int, int]:
         """Get actual range"""
         if not self.metadata["numbering"] or not self.entries:
             return (1, 0)
@@ -519,7 +528,7 @@ class TapDocument:
         enum = validator.enumeration()
         return (min(enum), max(enum))
 
-    def plan(self, comment="", skip=False):
+    def plan(self, comment: str="", skip: bool=False) -> str:
         """Get plan for this document"""
         options = {
             "comment": self.metadata["skip_comment"],
@@ -527,7 +536,7 @@ class TapDocument:
         }
         return self.create_plan(*self.range(), **options)
 
-    def actual_plan(self):
+    def actual_plan(self) -> str:
         """Get actual plan for this document"""
         options = {
             "comment": self.metadata["skip_comment"],
@@ -535,7 +544,7 @@ class TapDocument:
         }
         return self.create_plan(*self.actual_range(), **options)
 
-    def count_not_ok(self):
+    def count_not_ok(self) -> int:
         """How many testcases which are 'not ok' are there?"""
         count = 0
         for entry in self.entries:
@@ -543,7 +552,7 @@ class TapDocument:
                 count += 1
         return count
 
-    def count_ok(self):
+    def count_ok(self) -> int:
         """How many testcases which are 'ok' are there?"""
         count = 0
         for entry in self.entries:
@@ -551,7 +560,7 @@ class TapDocument:
                 count += 1
         return count
 
-    def count_todo(self):
+    def count_todo(self) -> int:
         """How many testcases are still 'todo'?"""
         count = 0
         for entry in self.entries:
@@ -559,7 +568,7 @@ class TapDocument:
                 count += 1
         return count
 
-    def count_skip(self):
+    def count_skip(self) -> int:
         """How many testcases got skipped in this document?"""
         count = 0
         for entry in self.entries:
@@ -567,26 +576,26 @@ class TapDocument:
                 count += 1
         return count
 
-    def bailed(self):
+    def bailed(self) -> bool:
         """Was a Bailout called at some point in time?"""
         for entry in self.entries:
             if entry.is_bailout:
                 return True
         return False
 
-    def bailout_message(self):
+    def bailout_message(self) -> typing.Optional[str]:
         """Return the first bailout message of document or None"""
         for entry in self.entries:
             if entry.is_bailout:
                 return entry.msg
         return None
 
-    def valid(self):
+    def valid(self) -> bool:
         """Is this document valid?"""
         validator = TapDocumentValidator(self)
         return validator.valid()
 
-    def __contains__(self, num):
+    def __contains__(self, num: int) -> bool:
         """Does testcase exist in document?
         It exists iff a testcase object with this number or number 'None'
         exists as entry in doc which corresponds to this number.
@@ -601,7 +610,7 @@ class TapDocument:
         except (ValueError, IndexError):
             return False
 
-    def __getitem__(self, num):
+    def __getitem__(self, num: int) -> typing.Optional[typing.Union[TapTestcase, TapBailout]]:
         """Return testcase with the given number.
 
         - Requires validation and therefore plan beforehand
@@ -636,11 +645,13 @@ class TapDocument:
                     return e
                 nr += 1
 
+        return None
+
     def __iter__(self):
         """Get iterator for testcases"""
         return TapDocumentIterator(self)
 
-    def __getstate__(self):
+    def __getstate__(self) -> typing.Dict[str, typing.Any]:
         """Return state of this object"""
         state = copy.copy(self.metadata)
         state["entries"] = [entry.__getstate__() for entry in self.entries]
@@ -648,7 +659,7 @@ class TapDocument:
             state["numbering"] = state["numbering"].__getstate__()
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: typing.Dict[str, typing.Any]) -> None:
         """Restore object's state from `state`"""
         self.entries = []
         self.metadata = {}
@@ -680,7 +691,7 @@ class TapDocument:
             if key not in self.metadata:
                 raise ValueError("Missing key {} in state".format(key))
 
-    def copy(self):
+    def copy(self) -> TapDocument:
         """Return a copy of this object"""
         obj = TapDocument()
         obj.__setstate__(self.__getstate__())
@@ -695,7 +706,7 @@ class TapDocument:
         """Finalize context for this document"""
         self.ctx.finalize()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of TAP document"""
         out = ""
         # version line
@@ -723,33 +734,34 @@ class TapDocument:
 class TapDocumentValidator:
     """TAP testcase numbering. In TAP documents it is called 'the plan'."""
 
-    def __init__(self, doc, lenient=True):
+    def __init__(self, doc: TapDocument, lenient: bool=True):
         """Constructor.
 
         :param TapDocument doc:   the TAP document to validate
+        :param bool lenient:      if True, data inconsistencies, like duplicate use of test case numbers, does not raise an exception
         """
-        self.lenient = lenient
-        self.skip = doc.skip
-        self.bailed = doc.bailed()
+        self.lenient: bool = lenient
+        self.skip: bool = doc.skip
+        self.bailed: bool = doc.bailed()
 
         if not doc.metadata["numbering"]:
             raise TapMissingPlan("Plan required before document validation")
 
         # retrieve numbers and range
-        self.numbers = []
-        self.validity = True
+        self.numbers: typing.List[typing.Optional[int]] = []
+        self.validity: bool = True
         for entry in doc.entries:
             if entry.is_testcase:
                 self.numbers.append(entry.number)
                 if not entry.field and not entry.skip:
                     self.validity = False
-        self.range = doc.range()
+        self.range: typing.Tuple[int, int] = doc.range()
 
         # prepare enumeration
-        self.enum = None
+        self.enum: typing.Optional[typing.List[int]] = None
 
-    def test_range_validity(self):
-        """Is `range` valid for `numbers`?"""
+    def test_range_validity(self) -> None:
+        """Is `range` valid for `numbers`? If not, raise an exception"""
         # more testcases than allowed
         length = self.range[1] - self.range[0] + 1
         if length < len(self.numbers):
@@ -775,7 +787,7 @@ class TapDocumentValidator:
         #        numbers.add(nr)
 
     @staticmethod
-    def enumerate(numbers, first=1, lenient=False):
+    def enumerate(numbers: typing.List[typing.Optional[int]], first: int=1, lenient: bool=False):
         """Take a sequence of positive numbers and assign numbers,
         where None is given::
 
@@ -793,14 +805,14 @@ class TapDocumentValidator:
           But if a high integer is given, this one is used instead.
         * Returns a sequence of positive numbers or raises a ValueError.
         """
-        assigned = set()
-        fixed = set()
-        sequence = []
-        next_number = 1
+        assigned: typing.Set[int] = set()
+        fixed: typing.Set[int] = set()
+        sequence: typing.List[int] = []
+        next_number: int = 1
 
         reuse_errmsg = "Testcase number {} was already used"
 
-        def get_next_number(nr):
+        def get_next_number(nr: int) -> int:
             nr = first
             while nr in assigned or nr in fixed:
                 nr += 1
@@ -836,7 +848,7 @@ class TapDocumentValidator:
 
         return sequence
 
-    def all_exist(self):
+    def all_exist(self) -> bool:
         """Do all testcases in specified `range` exist?"""
         self.enumeration()
         try:
@@ -846,10 +858,10 @@ class TapDocumentValidator:
         except ValueError:
             return False
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.valid()
 
-    def enumeration(self, lenient=True):
+    def enumeration(self, lenient: bool=True) -> typing.List[int]:
         """Get enumeration for given `self.numbers`. Enumeration is the list
         of testcase numbers like `self.numbers` but with Nones eliminated.
         Thus it maps all indices of testcase entries to testcase numbers.
@@ -865,12 +877,12 @@ class TapDocumentValidator:
     def __iter__(self):
         return iter(self.enumeration())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<TapDocumentValidator {} {}{}>".format(
             self.numbers, self.range, self.enum and " with enumeration" or ""
         )
 
-    def sanity_check(self, lenient=True):
+    def sanity_check(self, lenient: bool=True) -> None:
         """Raise any errors which indicate that this document is wrong.
         This method performs a subset of checks of `valid`, but raises errors
         with meaningful messages unlike `valid` which just returns False.
@@ -880,9 +892,8 @@ class TapDocumentValidator:
         self.test_range_validity()
         self.enumerate(self.numbers, self.range[0], lenient)
 
-    def valid(self, lenient=True):
-        """Is the given document valid, meaning that `numbers` and
-        `range` match?
+    def valid(self, lenient: bool=True) -> bool:
+        """Is the given document valid, meaning that `numbers` and `range` match?
         """
         if self.bailed:
             return False
@@ -904,17 +915,17 @@ class TapDocumentIterator:
     Raises Bailouts per default.
     """
 
-    def __init__(self, doc, raise_bailout=True):
-        self.skip = doc.skip
-        self.entries = copy.deepcopy(doc.entries)
-        self.enum = TapDocumentValidator(doc).enumeration()
+    def __init__(self, doc: TapDocument, raise_bailout: bool=True):
+        self.skip: bool = doc.skip
+        self.entries: typing.List[typing.Union[TapTestcase, TapBailout]] = copy.deepcopy(doc.entries)
+        self.enum: typing.Optional[typing.List[int]] = TapDocumentValidator(doc).enumeration()
         self.current, self.end = doc.range()
-        self.raise_bailout = raise_bailout
+        self.raise_bailout: bool = raise_bailout
 
     def __iter__(self):
         return self
 
-    def lookup(self, num):
+    def lookup(self, num: int) -> typing.Optional[TapTestcase]:
         """Return testcase for given number or None"""
         try:
             entries_index = self.enum.index(num)
@@ -934,10 +945,9 @@ class TapDocumentIterator:
             elif self.raise_bailout:
                 raise entry
 
-        if entries_index == -1:
-            return None
+        return None
 
-    def __next__(self):
+    def __next__(self) -> typing.Optional[TapTestcase]:
         if self.skip:
             raise StopIteration("Document gets skipped")
         if self.current > self.end:
@@ -950,16 +960,16 @@ class TapDocumentIterator:
 class TapDocumentActualIterator:
     """Iterator over actual *un*enumerated testcases. Raises Bailouts."""
 
-    def __init__(self, doc, raise_bailout=True):
-        self.skip = doc.skip
-        self.entries = copy.deepcopy(doc.entries)
-        self.current = 0
-        self.raise_bailout = raise_bailout
+    def __init__(self, doc: TapDocument, raise_bailout: bool=True):
+        self.skip: bool = doc.skip
+        self.entries: typing.List[typing.Union[TapTestcase, TapBailout]] = copy.deepcopy(doc.entries)
+        self.current: int = 0
+        self.raise_bailout: bool = raise_bailout
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> typing.Optional[TapTestcase]:
         if self.skip:
             raise StopIteration("Document gets skipped")
         if self.current >= len(self.entries):
@@ -971,6 +981,8 @@ class TapDocumentActualIterator:
                 return entry
             elif self.raise_bailout:
                 raise entry
+        return None
+            
 
 
 class TapDocumentFailedIterator:
@@ -978,14 +990,14 @@ class TapDocumentFailedIterator:
     Numbers stay 'None'. Ignores Bailouts.
     """
 
-    def __init__(self, doc):
-        self.current = 0
-        self.doc = doc
+    def __init__(self, doc: TapDocument):
+        self.current: int = 0
+        self.doc: TapDocument = doc
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> TapTestcase:
         if self.doc.skip:
             raise StopIteration("No entries available")
         while True:
@@ -1002,25 +1014,23 @@ class TapDocumentTokenizer:
     """Lexer for TAP document."""
 
     # just for documentation
-    TOKENS = set(
-        [
-            "VERSION_LINE",
-            "DATA",
-            "PLAN",
-            "TESTCASE",
-            "BAILOUT",
-            "WARN_VERSION_LINE",
-            "WARN_PLAN",
-            "WARN_TESTCASE",
-        ]
-    )
+    TOKENS: typing.Set[str] = {
+        "VERSION_LINE",
+        "DATA",
+        "PLAN",
+        "TESTCASE",
+        "BAILOUT",
+        "WARN_VERSION_LINE",
+        "WARN_PLAN",
+        "WARN_TESTCASE",
+    }
 
     # regexi to match lines
-    VERSION_REGEX = re.compile(r"TAP version (?P<version>\d+)\s*$", flags=re.I)
-    PLAN_REGEX = re.compile(
+    VERSION_REGEX: re.Pattern = re.compile(r"TAP version (?P<version>\d+)\s*$", flags=re.I)
+    PLAN_REGEX: re.Pattern = re.compile(
         r"(?P<first>\d+)\.\.(?P<last>\d+)\s*" r"(?P<comment>#.*?)?$"
     )
-    TESTCASE_REGEX = re.compile(
+    TESTCASE_REGEX: re.Pattern = re.compile(
         (
             r"(?P<field>(not )?ok)"
             r"(\s+(?P<number>\d+))?"
@@ -1029,26 +1039,26 @@ class TapDocumentTokenizer:
         ),
         flags=re.IGNORECASE,
     )
-    BAILOUT_REGEX = re.compile(
+    BAILOUT_REGEX: re.Pattern = re.compile(
         r"Bail out!(?P<comment>.*)", flags=re.MULTILINE | re.IGNORECASE
     )
 
     # lookalike matches
-    VERSION_LOOKALIKE = "tap version"
-    PLAN_LOOKALIKE = "1.."
-    TESTCASE_LOOKALIKE = ["not ok ", "ok "]
+    VERSION_LOOKALIKE: str = "tap version"
+    PLAN_LOOKALIKE: str = "1.."
+    TESTCASE_LOOKALIKE: typing.List[str] = ["not ok ", "ok "]
 
     def __init__(self):
-        self.pipeline = collections.deque()
-        self.last_indentation = 0
+        self.pipeline: typing.Deque[typing.Any] = collections.deque()
+        self.last_indentation: typing.Optional[int] = 0
 
     @classmethod
-    def strip_comment(cls, cmt):
+    def strip_comment(cls, cmt: typing.Optional[str]) -> str:
         if cmt is None:
             return ""
         return cmt.lstrip().lstrip("#-").lstrip().rstrip()
 
-    def parse_line(self, line):
+    def parse_line(self, line: str) -> None:
         """Parse one line of a TAP file"""
         match1 = self.VERSION_REGEX.match(line)
         match2 = self.PLAN_REGEX.match(line)
@@ -1096,13 +1106,13 @@ class TapDocumentTokenizer:
 
             add("DATA", line)
 
-    def from_file(self, filepath, encoding="utf-8"):
+    def from_file(self, filepath: str, encoding: str="utf-8") -> None:
         """Read TAP file using `filepath` as source."""
         with codecs.open(filepath, encoding=encoding) as fp:
             for line in fp.readlines():
                 self.parse_line(line.rstrip("\n\r"))
 
-    def from_string(self, string):
+    def from_string(self, string: str) -> None:
         """Read TAP source code from the given `string`."""
         for line in string.splitlines():
             self.parse_line(line.rstrip("\n\r"))
@@ -1121,29 +1131,29 @@ class TapDocumentTokenizer:
 class TapDocumentParser:
     """Parser for TAP documents"""
 
-    def __init__(self, tokenizer, lenient=True, logger=None):
-        self.tokenizer = tokenizer
-        self.lenient_parsing = lenient
-        self.doc = None
+    def __init__(self, tokenizer: TapDocumentTokenizer, lenient: bool=True, logger: typing.Optional[logging.Logger]=None):
+        self.tokenizer: TapDocumentTokenizer = tokenizer
+        self.lenient_parsing: bool = lenient
+        self.doc: typing.Optional[TapDocument] = None
 
         if logger:
-            self.log = logger
+            self.log: logging.Logger = logger
         else:
             logging.basicConfig()
             self.log = logging.getLogger(self.__class__.__name__)
 
     @classmethod
-    def parse_data(cls, lines):
+    def parse_data(cls, lines: typing.List[str]) -> typing.List[typing.Any]:
         """Give me some lines and I will parse it as data"""
-        data = []
+        data: typing.List[typing.Any] = []
         yaml_mode = False
         yaml_cache = ""
 
         for line in lines:
             if line.strip() == "---":
                 yaml_mode = True
-            elif line.strip() == "...":
-                data.append(YamlData(yamlish.load(yaml_cache)))
+            elif yaml_mode and line.strip() == "...":
+                data.append(YamlData(yaml.safe_load(yaml_cache)))
                 yaml_cache = ""
                 yaml_mode = False
             else:
@@ -1157,21 +1167,21 @@ class TapDocumentParser:
                         data.append(line + os.linesep)
         return data
 
-    def warn(self, msg):
+    def warn(self, msg: str) -> None:
         """Raise a warning with text `msg`"""
         if self.lenient_parsing:
             self.log.warning(msg)
         else:
             raise TapParseError(msg)
 
-    def parse(self):
+    def parse(self) -> None:
         """Parse the tokens provided by `self.tokenizer`."""
         self.doc = TapDocument()
         state = 0
         plan_written = False
-        comment_cache = []
+        comment_cache: typing.List[str] = []
 
-        def flush_cache(comment_cache):
+        def flush_cache(comment_cache: typing.List[str]) -> typing.List[str]:
             if comment_cache:
                 if self.doc.entries:
                     self.doc.entries[-1].data += self.parse_data(comment_cache)
@@ -1225,9 +1235,10 @@ class TapDocumentParser:
                 raise ValueError("Unknown token: {}".format(tok))
 
         comment_cache = flush_cache(comment_cache)
+        return None
 
     @property
-    def document(self):
+    def document(self) -> typing.Optional[TapDocument]:
         if not self.doc:
             self.parse()
         return self.doc
@@ -1236,22 +1247,22 @@ class TapDocumentParser:
 class TapProtocol:
     """The interface/protocol of a TAP implementation"""
 
-    def __init__(self, version=TapDocument.DEFAULT_VERSION):
+    def __init__(self, version: int=TapDocument.DEFAULT_VERSION):
         return NotImplemented
 
-    def plan(self, first, last, skip=""):
+    def plan(self, first: int, last: int, skip: str="") -> 'TapProtocol':
         raise NotImplementedError()
 
-    def testcase(self, ok, description="", skip="", todo=""):
+    def testcase(self, ok: bool, description: str="", skip: str="", todo: str="") -> 'TapProtocol':
         raise NotImplementedError()
 
-    def bailout(self, comment):
+    def bailout(self, comment: str) -> 'TapProtocol':
         raise NotImplementedError()
 
-    def write(self, line):
+    def write(self, line: str):
         raise NotImplementedError()
 
-    def finalize(self):
+    def finalize(self) -> 'TapProtocol':
         return NotImplemented
 
 
@@ -1264,12 +1275,12 @@ class TapWrapper(TapProtocol):
     unlike the TAP file format specification defines.
     """
 
-    def __init__(self, doc=None, version=TapDocument.DEFAULT_VERSION):
+    def __init__(self, doc: typing.Optional[TapDocument]=None, version: int=TapDocument.DEFAULT_VERSION):
         """Take a `doc` (or create a new one)"""
-        self.doc = doc or TapDocument(version)
-        self._plan = None
+        self.doc: TapDocument = doc or TapDocument(version)
+        self._plan: typing.Optional[typing.Tuple[int, int, str]] = None
 
-    def plan(self, first=None, last=None, skip="", tests=None):
+    def plan(self, first: typing.Optional[int]=None, last: typing.Optional[int]=None, skip: str="", tests: typing.Optional[int]=None) -> 'TapWrapper':
         """Define how many tests are run. Either provide `first` & `last`
         or `tests` as integer attributes. `skip` is an optional message.
         If set, the test run was skipped because of the reason given by `skip`.
@@ -1292,7 +1303,7 @@ class TapWrapper(TapProtocol):
         self._plan = (first, last, skip)
         return self
 
-    def write(self, line):
+    def write(self, line: str) -> 'TapWrapper':
         """Add a comment `line` at the current position."""
         if self.doc.entries:
             self.doc.entries[-1].data += [line]
@@ -1300,7 +1311,7 @@ class TapWrapper(TapProtocol):
             self.doc.add_header_line(line)
         return self
 
-    def testcase(self, ok=True, description="", skip=False, todo=False):
+    def testcase(self, ok: bool=True, description: str="", skip: bool=False, todo: bool=False) -> 'TapWrapper':
         """Add a testcase entry to the TapDocument"""
         tc = TapTestcase()
         tc.field = ok
@@ -1313,32 +1324,32 @@ class TapWrapper(TapProtocol):
         self.doc.add_testcase(tc)
         return self
 
-    def ok(self, description="", skip=False, todo=False):
+    def ok(self, description: str="", skip: bool=False, todo: bool=False) -> 'TapWrapper':
         """Add a succeeded testcase entry to the TapDocument"""
         self.testcase(True, description, skip, todo)
         return self
 
-    def not_ok(self, description="", skip=False, todo=False):
+    def not_ok(self, description: str="", skip: bool=False, todo: bool=False) -> 'TapWrapper':
         """Add a failed testcase entry to the TapDocument"""
         self.testcase(False, description, skip, todo)
         return self
 
-    def unwrap(self):
+    def unwrap(self) -> 'TapDocument':
         """Retrieve a copy of the current document"""
         self.finalize()
         return self.doc.copy()
 
-    def bailout(self, comment=""):
+    def bailout(self, comment: str="") -> 'TapWrapper':
         """Trigger a bailout"""
-        self.doc.add_bailout(comment)
+        self.doc.add_bailout(TapBailout(comment))
         return self
 
-    def out(self, stream=sys.stderr):
+    def out(self, stream=sys.stderr) -> None:
         """Write the document to stderr. Requires finalization."""
         self.finalize()
         print(str(self.doc), file=stream)
 
-    def finalize(self):
+    def finalize(self) -> 'TapWrapper':
         """Finalize document. Just checks whether plan has been written.
         Any operation afterwards besides `out` and `unwrap` is
         undefined behavior.
@@ -1350,11 +1361,11 @@ class TapWrapper(TapProtocol):
         )
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.doc)
 
 
-def merge(*docs):
+def merge(*docs: TapDocument) -> typing.Optional[TapDocument]:
     """Merge TAP documents provided as argument.
     Takes maximum TAP document version. Testcase numbers are
     incremented by consecutive offsets based on the TAP plan.
@@ -1373,7 +1384,9 @@ def merge(*docs):
 
     # normalize ranges
     ranges, offset = [], 1
-    minimum, maximum, count = float("inf"), 0, 0
+    minimum: float = float("inf")
+    maximum: float = 0.
+    count: int = 0
     for d in docs:
         r = list(d.range())
         r[1] = max(r[1], r[0] + len(d) - 1)
@@ -1424,6 +1437,6 @@ def merge(*docs):
     else:
         maximum = max(maximum, minimum + count - 1)
 
-    doc.add_plan(minimum, maximum, "; ".join(skip_comments), pab)
+    doc.add_plan(int(minimum), int(maximum), "; ".join(skip_comments), pab)
 
     return doc

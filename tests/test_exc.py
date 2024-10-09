@@ -9,7 +9,7 @@ import pickle
 import unittest
 
 
-def parse(source, strict=False):
+def parse(source: str, strict=False):
     return parse_string(source, lenient=not strict)
 
 
@@ -59,7 +59,7 @@ class TestExceptions(unittest.TestCase):
 
     def testPickle(self):
 
-        def trypickle(obj):
+        def trypickle(obj: TapBailout):
             dump_file = io.BytesIO()
             pickle.dump(obj, dump_file)
             dump_file.seek(0)

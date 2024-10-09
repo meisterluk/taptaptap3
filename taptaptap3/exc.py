@@ -13,6 +13,7 @@
 
 import os
 import sys
+import typing
 
 __all__ = ["TapParseError", "TapMissingPlan", "TapInvalidNumbering", "TapBailout"]
 
@@ -40,19 +41,19 @@ class TapBailout(Exception):
 
     def __init__(self, *args, **kwargs):
         super(TapBailout, self).__init__(*args, **kwargs)
-        self.data = []
+        self.data: typing.List[str] = []
 
     @property
-    def msg(self):
+    def msg(self) -> str:
         """Error message"""
         return getattr(self, 'message', self.args[0])
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Bail out! {}{}{}".format(
             self.msg, os.linesep, os.linesep.join(self.data)
         )
 
-    def copy(self, memo=None):
+    def copy(self, memo: typing.Optional[str]=None) -> 'TapBailout':
         inst = TapBailout(memo or self.msg)
         inst.data = self.data
         return inst

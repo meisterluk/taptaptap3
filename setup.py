@@ -20,14 +20,14 @@ import os
 from setuptools import setup
 
 
-def readfile(fname):
+def readfile(fname: str) -> str:
     with open(os.path.join(os.path.dirname(__file__), fname)) as fp:
         return fp.read()
 
 
 setup(
     name="taptaptap3",
-    version="3.0.0",
+    version="3.1.0",
     url="http://lukas-prokop.at/proj/taptaptap/",
     license="BSD",
     author="Lukas Prokop",
@@ -52,7 +52,7 @@ setup(
         "Topic :: System :: Logging",
         "Topic :: System :: Systems Administration",
     ],
-    install_requires=["yamlish"],
+    install_requires=["pyyaml"],
     scripts=["bin/tapmerge", "bin/tapvalidate"],
     test_suite="tests.run",
 )
