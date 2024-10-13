@@ -114,11 +114,11 @@ def run_tap_file(filepath):
     return (valid, doc.count_ok(), len(doc), doc.bailed(), "", err)
 
 
-validity = re.compile("##     validity: (-?\d+)", flags=re.I)
-tests = re.compile("## ok testcases: (\d+) / (\d+)", flags=re.I)
-rbailout = re.compile("##      bailout: (no|yes)", flags=re.I)
-inout = re.compile("##       stdout: (~?)(\S*)", flags=re.I)
-inerr = re.compile("##       stderr: (~?)(\S*)", flags=re.I)
+validity = re.compile(r"##     validity: (-?\d+)", flags=re.I)
+tests = re.compile(r"## ok testcases: (\d+) / (\d+)", flags=re.I)
+rbailout = re.compile(r"##      bailout: (no|yes)", flags=re.I)
+inout = re.compile(r"##       stdout: (~?)(\S*)", flags=re.I)
+inerr = re.compile(r"##       stderr: (~?)(\S*)", flags=re.I)
 
 
 def check_line(line, valid, ok, total, bailout, stdout, stderr):

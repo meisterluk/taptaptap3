@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Does TAP file indicate an error?
@@ -11,8 +11,8 @@ If some text occurs at stderr, taptaptap3 has a problem
 """
 
 import sys
-import taptaptap3
 import argparse
+import taptaptap3
 
 
 def main(args: argparse.Namespace) -> int:
@@ -32,7 +32,7 @@ def main(args: argparse.Namespace) -> int:
         return -1
 
 
-if __name__ == "__main__":
+def cli() -> int:
     # command line parameter parsing
     desc = ""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -40,4 +40,7 @@ if __name__ == "__main__":
         "report", metavar="report", help="the TAP file to read, dash for stdin"
     )
 
-    sys.exit(main(parser.parse_args()))
+    return main(parser.parse_args())
+
+if __name__ == "__main__":
+    sys.exit(cli() or 0)

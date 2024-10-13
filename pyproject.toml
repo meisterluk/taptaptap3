@@ -40,8 +40,8 @@ dependencies = ["pyyaml"]
 keywords = ["testing", "TAP", "test-anything-protocol"]
 
 [project.scripts]
-tapmerge = "bin:tapmerge"
-tapvalidate = "bin:tapvalidate"
+tapmerge = "taptaptap3.bin:tapmerge"
+tapvalidate = "taptaptap3.bin:tapvalidate"
 
 [project.urls]
 Homepage = "http://lukas-prokop.at/proj/taptaptap/"

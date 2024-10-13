@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
     proc.py
@@ -50,15 +49,33 @@ def write(line: str) -> None:
     writer.write(line)
 
 
-def ok(description: str="", skip: str="", todo: str="") -> bool:
+def ok(description: str="", skip: typing.Union[str, bool]=False, todo: typing.Union[str, bool]=False) -> bool:
     """Add a succeeded testcase entry"""
+    if skip is True:
+        skip = " "
+    elif skip is False:
+        skip = ""
+    if todo is True:
+        todo = " "
+    elif todo is False:
+        todo = ""
+
     _create()
     writer.testcase(True, description, skip, todo)
     return True
 
 
-def not_ok(description: str="", skip: str="", todo: str="") -> bool:
+def not_ok(description: str="", skip: typing.Union[str, bool]=False, todo: typing.Union[str, bool]=False) -> bool:
     """Add a failed testcase entry"""
+    if skip is True:
+        skip = " "
+    elif skip is False:
+        skip = ""
+    if todo is True:
+        todo = " "
+    elif todo is False:
+        todo = ""
+
     _create()
     writer.testcase(False, description, skip, todo)
     return True

@@ -35,15 +35,5 @@ __version__ = "3.1"
 __license__ = "3-clause BSD license"
 __docformat__ = "reStructuredText"
 
-from .impl import YamlData, TapTestcase, TapNumbering, TapActualNumbering
-from .impl import TapDocument, TapDocumentValidator, TapDocumentIterator
-from .impl import TapDocumentActualIterator, TapDocumentFailedIterator
-from .impl import TapDocumentTokenizer, TapDocumentParser, TapProtocol, TapWrapper
-from .impl import merge
-
-from .api import parse_string, parse_file, validate, harness, TapWriter
-from .api import TapCreator, SimpleTapCreator, UnittestResult, UnittestRunner
-
-from . import bin
-from . import exc
-from . import proc
+from .tapmerge import cli as tapmerge
+from .tapvalidate import cli as tapvalidate

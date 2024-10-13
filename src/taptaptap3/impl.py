@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
     impl.py
@@ -64,13 +63,16 @@ class YamlData:
         self.data = data
 
     def __eq__(self, other) -> bool:
-        return self.data == other.data
+        if hasattr(other, 'data'):
+            return self.data == other.data
+        else:
+            return self.data == other
 
     def __iter__(self):
         return iter(self.data)
 
     def __str__(self) -> str:
-        return yaml.safe_dump(self.data)
+        return yaml.safe_dump(self.data, explicit_start=True, explicit_end=True)
 
 
 class TapTestcase:

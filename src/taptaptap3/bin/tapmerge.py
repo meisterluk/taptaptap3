@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Merge two TAP files"""
 
-from __future__ import print_function
-
 import sys
-import taptaptap3
+import typing
 import argparse
+import taptaptap3
+
+from ..impl import TapDocument
 
 
 def read_stdin() -> typing.Optional[TapDocument]:
@@ -32,7 +33,7 @@ def main(args: argparse.Namespace) -> None:
         print(doc3, file=sys.stderr)
 
 
-if __name__ == "__main__":
+def cli() -> int:
     # command line parameter parsing
     parser = argparse.ArgumentParser(description="Merge two or more TAP files.")
     parser.add_argument(
@@ -47,3 +48,8 @@ if __name__ == "__main__":
     )
 
     main(parser.parse_args())
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(cli() or 0)
