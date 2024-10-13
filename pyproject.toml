@@ -1,0 +1,51 @@
+# taptaptap3
+# ~~~~~~~~~~
+#
+# TAP file handling for cats \*rawwr*
+#
+# To install *taptaptap3* use pip:
+#
+# .. code:: bash
+#
+#     $ pip install taptaptap3
+#
+# (C) 2014, Lukas Prokop, BSD 3-clause
+
+[project]
+name = "taptaptap3"
+version = "3.1.0"
+authors = [
+  { name = "Lukas Prokop", email = "admin@lukas-prokop.at" },
+]
+description = "Test Anything Protocol handling for cats"
+readme = "README.rst"
+requires-python = ">=3.4"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: BSD License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.5",
+  "Programming Language :: Python :: 3.6",
+  "Topic :: Software Development :: Documentation",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Testing",
+  "Topic :: System :: Logging",
+  "Topic :: System :: Systems Administration",
+]
+dependencies = ["pyyaml"]
+keywords = ["testing", "TAP", "test-anything-protocol"]
+
+[project.scripts]
+tapmerge = "bin:tapmerge"
+tapvalidate = "bin:tapvalidate"
+
+[project.urls]
+Homepage = "http://lukas-prokop.at/proj/taptaptap/"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

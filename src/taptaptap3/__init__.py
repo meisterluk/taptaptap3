@@ -10,7 +10,7 @@
     but will possibly accept older version. See the spec [0]_ [1]_.
 
     **Remarks:**
-    * Implemented for python 2.7
+    * Implemented for python 3.4 and later
     * I always try to assign a comment to a testcase. As such I assume that
       in a source code like::
 

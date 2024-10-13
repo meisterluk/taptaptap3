@@ -227,7 +227,7 @@ class TapTestcase:
         if why:
             self._directives["skip"].append(why)
 
-    def copy(self) -> TapTestcase:
+    def copy(self) -> 'TapTestcase':
         """Return a copy of myself"""
         tc = TapTestcase()
         tc.__setstate__(self.__getstate__())
@@ -691,7 +691,7 @@ class TapDocument:
             if key not in self.metadata:
                 raise ValueError("Missing key {} in state".format(key))
 
-    def copy(self) -> TapDocument:
+    def copy(self) -> 'TapDocument':
         """Return a copy of this object"""
         obj = TapDocument()
         obj.__setstate__(self.__getstate__())
