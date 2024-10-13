@@ -3,9 +3,9 @@ Documentation
 
 :name:          taptaptap
 :author:        Lukas Prokop
-:date:          Feb-Apr 2014, Jul 2018
+:date:          Feb-Apr 2014, Jul 2018, Oct 2024
 :license:       BSD 3-clause
-:version:       3.0.0
+:version:       3.1.0
 :issues:        http://github.com/meisterluk/taptaptap3/issues
 
 Test Anything Protocol handling for cat lovers \*rawwr*
@@ -18,8 +18,8 @@ Compatibility
 -------------
 
 ``taptaptap3`` is only supposed to be working with python 3.5 upwards.
-It was written for python 2.7 as package `taptaptap <https://github.com/meisterluk/taptaptap>`_ and this implementation is a port to python3.
-It has been tested with Python 3.6.5 on xubuntu 18.04 (Linux 4.15 x86_64) 
+It was written for python 2.7 as package `taptaptap <https://github.com/meisterluk/taptaptap>`_ and this implementation is the modern port to python3.
+It has been tested with Python 3.12.6 on Arch Linux (Linux 6.10 on x86_64) 
 
 The File Format
 ---------------
@@ -92,7 +92,7 @@ Command line tools
 
 You can also invoke ``taptaptap3`` directly from the command line::
 
-    python -m taptaptap3.__main__ some_tap_file_to_validate.tap
+    tapvalidate some_tap_file_to_validate.tap
 
 This command will parse the file and write the file in a way how it was understood by the module. The exit code indicates its validity:
 
